@@ -1,0 +1,4 @@
+string action_echo
+string pose_name_echo
+string last_action
+string last_action_et

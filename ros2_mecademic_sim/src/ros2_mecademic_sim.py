@@ -5,10 +5,10 @@ from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
 
-class R1Interfacer(Node):
+class Meca500R3Sim(Node):
 
     def __init__(self):
-        super().__init__("meca_500_r3_sim_interfacer")
+        super().__init__("ros2_mecademic_sim")
 
         self.from_sp = String()
         self.to_sp = String()
@@ -107,11 +107,11 @@ class R1Interfacer(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    unicorn_1_interfacer = R1Interfacer()
+    ros2_mecademic_sim = Meca500R3Sim()
 
-    rclpy.spin(unicorn_1_interfacer)
+    rclpy.spin(ros2_mecademic_sim)
 
-    unicorn_1_interfacer.destroy_node()
+    ros2_mecademic_sim.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
