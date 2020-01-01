@@ -12,9 +12,12 @@ import os
 import sys
 import rclpy
 import time
+import csv
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
+from ros2_mecademic_msgs.msg import Meca500SPToPoseUpdater
+from ros2_mecademic_msgs.msg import Meca500PoseUpdaterToSP
 from ament_index_python.packages import get_package_share_directory
 
 class MecaPoseUpdater(Node):
@@ -22,11 +25,13 @@ class MecaPoseUpdater(Node):
     def __init__(self):
         super().__init__("ros2_mecademic_utils")
 
-        self.from_sp = String()
-        self.to_sp = String()
+        self.from_sp = Meca500SPToPoseUpdater()
+        self.to_sp = Meca500PoseUpdaterToSP()
         self.from_robot = JointState()
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.prev_action = ""
+        self.prev_pose_name = ""
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utils'),
             'poses', 'joint_poses.csv')
@@ -42,13 +47,13 @@ class MecaPoseUpdater(Node):
             10)
 
         self.cmd_subscriber = self.create_subscription(
-            String, 
+            Meca500SPToPoseUpdater, 
             "/meca_500_sp_to_pose_updater",
             self.sp_callback,
             10)
 
         self.response_publisher = self.create_publisher(
-            String,
+            Meca500PoseUpdaterToSP,
             "/meca_500_pose_updater_to_sp",
             10)
 
@@ -219,7 +224,7 @@ class MecaPoseUpdater(Node):
             elif self.action == "clear":
                 self.clear_pose_list()
             elif self.action == "update":
-                self.update_pose_list(self.pose_name)
+                self.update_pose_list(self.joints_input, self.joints_oldposes, self.joints_newposes, self.pose_name, self.act_pos)
             else:
                 self.uninhibit_tick()
         else:

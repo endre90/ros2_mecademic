@@ -16,6 +16,7 @@ setup(
             ['resource/' + package_name]),
 	(os.path.join('share', package_name), glob('launch/*.launch.py')),
         ('share/' + package_name, ['package.xml']),
+	('share/' + package_name + '/poses/', ['poses/joint_poses.csv']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
