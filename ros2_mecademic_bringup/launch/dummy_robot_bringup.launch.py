@@ -31,5 +31,9 @@ def generate_launch_description():
           Node(package='ros2_mecademic_state_publisher', node_executable='ros2_mecademic_state_publisher',
                output='screen', arguments=[urdf1]), #parameters=[config]
           Node(package='ros2_mecademic_sim', node_executable='ros2_mecademic_sim',
-               output='screen')
+               output='screen'),
+          Node(package='ros2_mecademic_utils', node_executable='ros2_mecademic_utils',
+               output='screen'),
+          Node(package='rviz2', node_executable='rviz2',
+               output='screen'),
      ])
