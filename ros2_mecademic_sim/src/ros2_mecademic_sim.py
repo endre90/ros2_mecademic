@@ -27,41 +27,232 @@ class Window(QWidget):
         step = 1
 
         grid = QGridLayout()
-        i = 0
 
-        for name in self.joint_names:
-            slider1Box = QGroupBox(name)
-            slider1 = QSlider(Qt.Horizontal)
-            slider1.setFocusPolicy(Qt.StrongFocus)
-            slider1.setTickPosition(QSlider.TicksBothSides)
-            slider1.setMinimum(minimum)
-            slider1.setMaximum(maximum)
-            slider1.setSingleStep(step)
-            vbox1 = QVBoxLayout()
-            vbox1.addWidget(slider1)
-            vbox1.addStretch(1)
-            slider1Box.setLayout(vbox1)
 
-            label1Box = QGroupBox("actual")
-            label1 = QLabel("value")
-            slider1.valueChanged.connect(label1.setNum)
-            vbox1l = QVBoxLayout()
-            vbox1l.addWidget(label1)
-            vbox1l.addStretch(1)
-            label1Box.setLayout(vbox1l)
+        # Sliders setup:
+        self.slider_box_1 = QGroupBox(self.joint_names[0])
+        self.slider_box_2 = QGroupBox(self.joint_names[1])
+        self.slider_box_3 = QGroupBox(self.joint_names[2])
+        self.slider_box_4 = QGroupBox(self.joint_names[3])
+        self.slider_box_5 = QGroupBox(self.joint_names[4])
+        self.slider_box_6 = QGroupBox(self.joint_names[5])
+
+        self.slider_boxes = [self.slider_box_1, self.slider_box_2, self.slider_box_3, self.slider_box_4, self.slider_box_5, self.slider_box_6]
+
+        self.slider_1 = QSlider(Qt.Horizontal)
+        self.slider_2 = QSlider(Qt.Horizontal)
+        self.slider_3 = QSlider(Qt.Horizontal)
+        self.slider_4 = QSlider(Qt.Horizontal)
+        self.slider_5 = QSlider(Qt.Horizontal)
+        self.slider_6 = QSlider(Qt.Horizontal)
+
+        self.sliders = [self.slider_1, self.slider_2, self.slider_3, self.slider_4, self.slider_5, self.slider_6]
         
-            grid.addWidget(slider1Box, i, 0)
-            grid.addWidget(label1Box, i, 1)
-            i = i + 1
+        self.slider_box_1_layout = QVBoxLayout()
+        self.slider_box_2_layout = QVBoxLayout()
+        self.slider_box_3_layout = QVBoxLayout()
+        self.slider_box_4_layout = QVBoxLayout()
+        self.slider_box_5_layout = QVBoxLayout()
+        self.slider_box_6_layout = QVBoxLayout()
 
-        radio1 = QRadioButton("Active")
-        radio1.setChecked(False)
-        grid.addWidget(radio1)
+        for slider in self.sliders:
+            slider.setFocusPolicy(Qt.StrongFocus)
+            slider.setTickPosition(QSlider.TicksBothSides)
+            slider.setMinimum(minimum)
+            slider.setMaximum(maximum)
+            slider.setSingleStep(step)
+            slider.setMinimumWidth(300)
+        
+        self.slider_box_1_layout.addWidget(self.slider_1)
+        self.slider_box_2_layout.addWidget(self.slider_2)
+        self.slider_box_3_layout.addWidget(self.slider_3)
+        self.slider_box_4_layout.addWidget(self.slider_4)
+        self.slider_box_5_layout.addWidget(self.slider_5)
+        self.slider_box_6_layout.addWidget(self.slider_6)
+
+        self.slider_box_1.setLayout(self.slider_box_1_layout)
+        self.slider_box_2.setLayout(self.slider_box_2_layout)
+        self.slider_box_3.setLayout(self.slider_box_3_layout)
+        self.slider_box_4.setLayout(self.slider_box_4_layout)
+        self.slider_box_5.setLayout(self.slider_box_5_layout)
+        self.slider_box_6.setLayout(self.slider_box_6_layout)
+
+
+        # Indicator labels setup:
+        self.label_box_1 = QGroupBox("measured")
+        self.label_box_2 = QGroupBox("measured")
+        self.label_box_3 = QGroupBox("measured")
+        self.label_box_4 = QGroupBox("measured")
+        self.label_box_5 = QGroupBox("measured")
+        self.label_box_6 = QGroupBox("measured")
+
+        self.label_boxes = [self.label_box_1, self.label_box_2, self.label_box_3, self.label_box_4, self.label_box_5, self.label_box_6]
+
+        self.label_1 = QLabel("value")
+        self.label_2 = QLabel("value")
+        self.label_3 = QLabel("value")
+        self.label_4 = QLabel("value")
+        self.label_5 = QLabel("value")
+        self.label_6 = QLabel("value")
+
+        self.labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6]
+
+        self.label_box_1_layout = QVBoxLayout()
+        self.label_box_2_layout = QVBoxLayout()
+        self.label_box_3_layout = QVBoxLayout()
+        self.label_box_4_layout = QVBoxLayout()
+        self.label_box_5_layout = QVBoxLayout()
+        self.label_box_6_layout = QVBoxLayout()
+
+        self.label_box_1_layout.addWidget(self.label_1)
+        self.label_box_2_layout.addWidget(self.label_2)
+        self.label_box_3_layout.addWidget(self.label_3)
+        self.label_box_4_layout.addWidget(self.label_4)
+        self.label_box_5_layout.addWidget(self.label_5)
+        self.label_box_6_layout.addWidget(self.label_6)
+
+        self.label_box_1.setLayout(self.label_box_1_layout)
+        self.label_box_2.setLayout(self.label_box_2_layout)
+        self.label_box_3.setLayout(self.label_box_3_layout)
+        self.label_box_4.setLayout(self.label_box_4_layout)
+        self.label_box_5.setLayout(self.label_box_5_layout)
+        self.label_box_6.setLayout(self.label_box_6_layout)
+
+
+        # Ref pos commander setup
+        self.line_box_1 = QGroupBox("ref_pos")
+        self.line_box_2 = QGroupBox("ref_pos")
+        self.line_box_3 = QGroupBox("ref_pos")
+        self.line_box_4 = QGroupBox("ref_pos")
+        self.line_box_5 = QGroupBox("ref_pos")
+        self.line_box_6 = QGroupBox("ref_pos")
+
+        self.line_boxes = [self.line_box_1, self.line_box_2, self.line_box_3, self.line_box_4, self.line_box_5, self.line_box_6]
+
+        self.line_1 = QLineEdit()
+        self.line_2 = QLineEdit()
+        self.line_3 = QLineEdit()
+        self.line_4 = QLineEdit()
+        self.line_5 = QLineEdit()
+        self.line_6 = QLineEdit()
+
+        self.lines = [self.line_1, self.line_2, self.line_3, self.line_4, self.line_5, self.line_6]
+
+        self.line_1.setMaximumWidth(120)
+        self.line_2.setMaximumWidth(120)
+        self.line_3.setMaximumWidth(120)
+        self.line_4.setMaximumWidth(120)
+        self.line_5.setMaximumWidth(120)
+        self.line_6.setMaximumWidth(120)
+
+        self.button_1 = QPushButton('set')
+        self.button_2 = QPushButton('set')
+        self.button_3 = QPushButton('set')
+        self.button_4 = QPushButton('set')
+        self.button_5 = QPushButton('set')
+        self.button_6 = QPushButton('set')
+
+        self.buttons = [self.button_1, self.button_2, self.button_3, self.button_4, self.button_5, self.button_6]
+
+        self.line_box_1_layout = QHBoxLayout()
+        self.line_box_2_layout = QHBoxLayout()
+        self.line_box_3_layout = QHBoxLayout()
+        self.line_box_4_layout = QHBoxLayout()
+        self.line_box_5_layout = QHBoxLayout()
+        self.line_box_6_layout = QHBoxLayout()
+
+        self.line_box_1_layout.addWidget(self.line_1)
+        self.line_box_1_layout.addWidget(self.button_1)
+        self.line_box_2_layout.addWidget(self.line_2)
+        self.line_box_2_layout.addWidget(self.button_2)
+        self.line_box_3_layout.addWidget(self.line_3)
+        self.line_box_3_layout.addWidget(self.button_3)
+        self.line_box_4_layout.addWidget(self.line_4)
+        self.line_box_4_layout.addWidget(self.button_4)
+        self.line_box_5_layout.addWidget(self.line_5)
+        self.line_box_5_layout.addWidget(self.button_5)
+        self.line_box_6_layout.addWidget(self.line_6)
+        self.line_box_6_layout.addWidget(self.button_6)
+
+        self.line_box_1.setLayout(self.line_box_1_layout)
+        self.line_box_2.setLayout(self.line_box_2_layout)
+        self.line_box_3.setLayout(self.line_box_3_layout)
+        self.line_box_4.setLayout(self.line_box_4_layout)
+        self.line_box_5.setLayout(self.line_box_5_layout)
+        self.line_box_6.setLayout(self.line_box_6_layout)
+
+
+        # One point of control:
+        for slider in self.sliders:
+            slider.setEnabled(False)
+        
+        for label in self.labels:
+            label.setEnabled(False)
+        
+        for line in self.lines:
+            line.setEnabled(False)
+        
+        for button in self.buttons:
+            button.setEnabled(False)
+
+        self.radio_1 = QRadioButton("GUI control enabled")
+        self.radio_1.setChecked(False)
+
+        def radio_state():
+            if self.radio_1.isChecked() == True:
+                for slider in self.sliders:
+                    slider.setEnabled(True)
+
+                for label in self.labels:
+                    label.setEnabled(True)
+
+                for line in self.lines:
+                    line.setEnabled(True)
+
+                for button in self.buttons:
+                    button.setEnabled(True)
+            else:
+                for slider in self.sliders:
+                    slider.setEnabled(False)
+
+                for label in self.labels:
+                    label.setEnabled(False)
+
+                for line in self.lines:
+                    line.setEnabled(False)
+
+                for button in self.buttons:
+                    button.setEnabled(False)
+
+        self.radio_1.toggled.connect(radio_state)
+
+
+        # inter-widget communications:
+        self.slider_1.valueChanged.connect(self.label_1.setNum)
+        self.slider_2.valueChanged.connect(self.label_2.setNum)
+        self.slider_3.valueChanged.connect(self.label_3.setNum)
+        self.slider_4.valueChanged.connect(self.label_4.setNum)
+        self.slider_5.valueChanged.connect(self.label_5.setNum)
+        self.slider_6.valueChanged.connect(self.label_6.setNum)
+
+
+        # populate the grid with widgets:
+        for slider_box in self.slider_boxes:
+            grid.addWidget(slider_box, self.slider_boxes.index(slider_box), 0)
+        
+        for label_box in self.label_boxes:
+            grid.addWidget(label_box, self.label_boxes.index(label_box), 1)
+
+        for line_box in self.line_boxes:
+            grid.addWidget(line_box, self.line_boxes.index(line_box), 2)
+    
+        grid.addWidget(self.radio_1)
 
         self.setLayout(grid)
 
-        self.setWindowTitle("Meca 500 joint pose")
-        self.resize(450, 300)
+        self.setWindowTitle("Meca 500 joint pose controller")
+        self.resize(550, 250)
+
 
 class Meca500R3Sim(Node):
 
@@ -149,6 +340,7 @@ class Meca500R3Sim(Node):
                     pass
             else:
                 pass
+
         self.to_r.name = self.joint_names
         self.to_r.position = self.pub_pos
         self.joint_cmd_publisher_.publish(self.to_r)
@@ -203,8 +395,6 @@ class Meca500R3Sim(Node):
                     pass
         
         return actual_joint_pose
-
-    
 
 def main(args=None):
 
