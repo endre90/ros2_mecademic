@@ -3,6 +3,7 @@ import rclpy
 import time
 import csv
 import os
+import math
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
@@ -13,21 +14,29 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-class Window(QWidget):
+class CommVariables():
+    gui_control_enabled = False
+    slider_1_value = 0
+    slider_2_value = 0
+    slider_3_value = 0
+    slider_4_value = 0
+    slider_5_value = 0
+    slider_6_value = 0
+    def __init__(self, parent=None):
+        super(CommVariables, self).__init__()
+
+class Window(QWidget, CommVariables):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
 
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
 
-        self.active_button = False
-
         minimum = -180
         maximum = 180
         step = 1
 
         grid = QGridLayout()
-
 
         # Sliders setup:
         self.slider_box_1 = QGroupBox(self.joint_names[0])
@@ -79,14 +88,29 @@ class Window(QWidget):
 
 
         # Indicator labels setup:
-        self.label_box_1 = QGroupBox("measured")
-        self.label_box_2 = QGroupBox("measured")
-        self.label_box_3 = QGroupBox("measured")
-        self.label_box_4 = QGroupBox("measured")
-        self.label_box_5 = QGroupBox("measured")
-        self.label_box_6 = QGroupBox("measured")
+        self.label_box_1 = QGroupBox("rad")
+        self.label_box_2 = QGroupBox("rad")
+        self.label_box_3 = QGroupBox("rad")
+        self.label_box_4 = QGroupBox("rad")
+        self.label_box_5 = QGroupBox("rad")
+        self.label_box_6 = QGroupBox("rad")
+
+        # Indicator labels setup:
+        self.label_box_12 = QGroupBox("deg")
+        self.label_box_22 = QGroupBox("deg")
+        self.label_box_32 = QGroupBox("deg")
+        self.label_box_42 = QGroupBox("deg")
+        self.label_box_52 = QGroupBox("deg")
+        self.label_box_62 = QGroupBox("deg")
 
         self.label_boxes = [self.label_box_1, self.label_box_2, self.label_box_3, self.label_box_4, self.label_box_5, self.label_box_6]
+        self.label_boxes2 = [self.label_box_12, self.label_box_22, self.label_box_32, self.label_box_42, self.label_box_52, self.label_box_62]
+
+        for label_box in self.label_boxes:
+            label_box.setMaximumWidth(60)
+
+        for label_box in self.label_boxes2:
+            label_box.setMaximumWidth(60)
 
         self.label_1 = QLabel("value")
         self.label_2 = QLabel("value")
@@ -95,7 +119,15 @@ class Window(QWidget):
         self.label_5 = QLabel("value")
         self.label_6 = QLabel("value")
 
+        self.label_12 = QLabel("value")
+        self.label_22 = QLabel("value")
+        self.label_32 = QLabel("value")
+        self.label_42 = QLabel("value")
+        self.label_52 = QLabel("value")
+        self.label_62 = QLabel("value")
+
         self.labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6]
+        self.labels2 = [self.label_12, self.label_22, self.label_32, self.label_42, self.label_52, self.label_62]
 
         self.label_box_1_layout = QVBoxLayout()
         self.label_box_2_layout = QVBoxLayout()
@@ -104,12 +136,26 @@ class Window(QWidget):
         self.label_box_5_layout = QVBoxLayout()
         self.label_box_6_layout = QVBoxLayout()
 
+        self.label_box_12_layout = QVBoxLayout()
+        self.label_box_22_layout = QVBoxLayout()
+        self.label_box_32_layout = QVBoxLayout()
+        self.label_box_42_layout = QVBoxLayout()
+        self.label_box_52_layout = QVBoxLayout()
+        self.label_box_62_layout = QVBoxLayout()
+
         self.label_box_1_layout.addWidget(self.label_1)
         self.label_box_2_layout.addWidget(self.label_2)
         self.label_box_3_layout.addWidget(self.label_3)
         self.label_box_4_layout.addWidget(self.label_4)
         self.label_box_5_layout.addWidget(self.label_5)
         self.label_box_6_layout.addWidget(self.label_6)
+
+        self.label_box_12_layout.addWidget(self.label_12)
+        self.label_box_22_layout.addWidget(self.label_22)
+        self.label_box_32_layout.addWidget(self.label_32)
+        self.label_box_42_layout.addWidget(self.label_42)
+        self.label_box_52_layout.addWidget(self.label_52)
+        self.label_box_62_layout.addWidget(self.label_62)
 
         self.label_box_1.setLayout(self.label_box_1_layout)
         self.label_box_2.setLayout(self.label_box_2_layout)
@@ -118,14 +164,21 @@ class Window(QWidget):
         self.label_box_5.setLayout(self.label_box_5_layout)
         self.label_box_6.setLayout(self.label_box_6_layout)
 
+        self.label_box_12.setLayout(self.label_box_12_layout)
+        self.label_box_22.setLayout(self.label_box_22_layout)
+        self.label_box_32.setLayout(self.label_box_32_layout)
+        self.label_box_42.setLayout(self.label_box_42_layout)
+        self.label_box_52.setLayout(self.label_box_52_layout)
+        self.label_box_62.setLayout(self.label_box_62_layout)
+
 
         # Ref pos commander setup
-        self.line_box_1 = QGroupBox("ref_pos")
-        self.line_box_2 = QGroupBox("ref_pos")
-        self.line_box_3 = QGroupBox("ref_pos")
-        self.line_box_4 = QGroupBox("ref_pos")
-        self.line_box_5 = QGroupBox("ref_pos")
-        self.line_box_6 = QGroupBox("ref_pos")
+        self.line_box_1 = QGroupBox("ref_deg")
+        self.line_box_2 = QGroupBox("ref_deg")
+        self.line_box_3 = QGroupBox("ref_deg")
+        self.line_box_4 = QGroupBox("ref_deg")
+        self.line_box_5 = QGroupBox("ref_deg")
+        self.line_box_6 = QGroupBox("ref_deg")
 
         self.line_boxes = [self.line_box_1, self.line_box_2, self.line_box_3, self.line_box_4, self.line_box_5, self.line_box_6]
 
@@ -191,6 +244,9 @@ class Window(QWidget):
         
         for line in self.lines:
             line.setEnabled(False)
+
+        for label in self.labels2:
+            label.setEnabled(False)
         
         for button in self.buttons:
             button.setEnabled(False)
@@ -200,10 +256,14 @@ class Window(QWidget):
 
         def radio_state():
             if self.radio_1.isChecked() == True:
+                CommVariables.gui_control_enabled = True
                 for slider in self.sliders:
                     slider.setEnabled(True)
 
                 for label in self.labels:
+                    label.setEnabled(True)
+
+                for label in self.labels2:
                     label.setEnabled(True)
 
                 for line in self.lines:
@@ -212,10 +272,14 @@ class Window(QWidget):
                 for button in self.buttons:
                     button.setEnabled(True)
             else:
+                CommVariables.gui_control_enabled = False
                 for slider in self.sliders:
                     slider.setEnabled(False)
 
                 for label in self.labels:
+                    label.setEnabled(False)
+
+                for label in self.labels2:
                     label.setEnabled(False)
 
                 for line in self.lines:
@@ -226,15 +290,86 @@ class Window(QWidget):
 
         self.radio_1.toggled.connect(radio_state)
 
+        def slider_1_change():
+            self.label_1.setText('{0:0.2f}'.format(self.slider_1.value() * math.pi / 180))
+            self.label_12.setNum(self.slider_1.value())
+            CommVariables.slider_1_value = self.slider_1.value()
+        
+        def slider_2_change():
+            self.label_2.setText('{0:0.2f}'.format(self.slider_2.value() * math.pi / 180))
+            self.label_22.setNum(self.slider_2.value())
+            CommVariables.slider_2_value = self.slider_2.value()
+        
+        def slider_3_change():
+            self.label_3.setText('{0:0.2f}'.format(self.slider_3.value() * math.pi / 180))
+            self.label_32.setNum(self.slider_3.value())
+            CommVariables.slider_3_value = self.slider_3.value()
+        
+        def slider_4_change():
+            self.label_4.setText('{0:0.2f}'.format(self.slider_4.value() * math.pi / 180))
+            self.label_42.setNum(self.slider_4.value())
+            CommVariables.slider_4_value = self.slider_4.value()
+        
+        def slider_5_change():
+            self.label_5.setText('{0:0.2f}'.format(self.slider_5.value() * math.pi / 180))
+            self.label_52.setNum(self.slider_5.value())
+            CommVariables.slider_5_value = self.slider_5.value()
+        
+        def slider_6_change():
+            self.label_6.setText('{0:0.2f}'.format(self.slider_6.value() * math.pi / 180))
+            self.label_62.setNum(self.slider_6.value())
+            CommVariables.slider_6_value = self.slider_6.value()
 
         # inter-widget communications:
-        self.slider_1.valueChanged.connect(self.label_1.setNum)
-        self.slider_2.valueChanged.connect(self.label_2.setNum)
-        self.slider_3.valueChanged.connect(self.label_3.setNum)
-        self.slider_4.valueChanged.connect(self.label_4.setNum)
-        self.slider_5.valueChanged.connect(self.label_5.setNum)
-        self.slider_6.valueChanged.connect(self.label_6.setNum)
+        self.slider_1.valueChanged.connect(slider_1_change)
+        self.slider_2.valueChanged.connect(slider_2_change)
+        self.slider_3.valueChanged.connect(slider_3_change)
+        self.slider_4.valueChanged.connect(slider_4_change)
+        self.slider_5.valueChanged.connect(slider_5_change)
+        self.slider_6.valueChanged.connect(slider_6_change)
 
+        def button_1_clicked():
+            self.slider_1.setValue(int(self.line_1.text()))
+        
+        def button_2_clicked():
+            self.slider_2.setValue(int(self.line_2.text()))
+
+        def button_3_clicked():
+            self.slider_3.setValue(int(self.line_3.text()))
+
+        def button_4_clicked():
+            self.slider_4.setValue(int(self.line_4.text()))
+
+        def button_5_clicked():
+            self.slider_5.setValue(int(self.line_5.text()))
+
+        def button_6_clicked():
+            self.slider_6.setValue(int(self.line_6.text()))
+
+        self.button_1.clicked.connect(button_1_clicked)
+        self.button_2.clicked.connect(button_2_clicked)
+        self.button_3.clicked.connect(button_3_clicked)
+        self.button_4.clicked.connect(button_4_clicked)
+        self.button_5.clicked.connect(button_5_clicked)
+        self.button_6.clicked.connect(button_6_clicked)
+
+        # self.slider_1_value = self.slider_1.value()
+        self.slider_2_value = self.slider_2.value()
+        self.slider_3_value = self.slider_3.value()
+        self.slider_4_value = self.slider_4.value()
+        self.slider_5_value = self.slider_5.value()
+        self.slider_6_value = self.slider_6.value()
+
+        # pose saver widget:
+        self.pose_saver_box = QGroupBox("pose_saver")
+        self.pose_saver_box_layout = QHBoxLayout()
+        self.pose_saver_label = QLabel("pose_name")
+        self.pose_saver_line = QLineEdit()
+        self.pose_saver_button = QPushButton("update")
+        self.pose_saver_box_layout.addWidget(self.pose_saver_label)
+        self.pose_saver_box_layout.addWidget(self.pose_saver_line)
+        self.pose_saver_box_layout.addWidget(self.pose_saver_button)
+        self.pose_saver_box.setLayout(self.pose_saver_box_layout)
 
         # populate the grid with widgets:
         for slider_box in self.slider_boxes:
@@ -243,10 +378,15 @@ class Window(QWidget):
         for label_box in self.label_boxes:
             grid.addWidget(label_box, self.label_boxes.index(label_box), 1)
 
+        for label_box in self.label_boxes2:
+            grid.addWidget(label_box, self.label_boxes2.index(label_box), 2)
+
         for line_box in self.line_boxes:
-            grid.addWidget(line_box, self.line_boxes.index(line_box), 2)
+            grid.addWidget(line_box, self.line_boxes.index(line_box), 3)
     
-        grid.addWidget(self.radio_1)
+        grid.addWidget(self.pose_saver_box, 6, 0, 1, 4)
+        grid.addWidget(self.radio_1, 7, 0)
+
 
         self.setLayout(grid)
 
@@ -254,10 +394,13 @@ class Window(QWidget):
         self.resize(550, 250)
 
 
-class Meca500R3Sim(Node):
+class Meca500R3Sim(Node, CommVariables):
 
     def __init__(self):
         super().__init__("ros2_mecademic_sim")
+
+        # self.cv = CommVariables()
+        # self.active_button = False
 
         self.from_sp = String()
         self.to_sp = String()
@@ -330,22 +473,43 @@ class Meca500R3Sim(Node):
         print(self.ref_pos)
 
     def interfacer_to_r_publisher_callback(self):
-        for i in range(0, 6):
-            if self.ref_pos != None:
-                if self.ref_pos[i] < self.act_pos[i]:
-                    self.pub_pos[i] = round(self.act_pos[i] - 0.01, 2)
-                elif self.ref_pos[i] > self.act_pos[i]:
-                    self.pub_pos[i] = round(self.act_pos[i] + 0.01, 2)
+        if CommVariables.gui_control_enabled == False:
+            for i in range(0, 6):
+                if self.ref_pos != None:
+                    if self.ref_pos[i] < self.act_pos[i]:
+                        self.pub_pos[i] = round(self.act_pos[i] - 0.01, 2)
+                    elif self.ref_pos[i] > self.act_pos[i]:
+                        self.pub_pos[i] = round(self.act_pos[i] + 0.01, 2)
+                    else:
+                        pass
                 else:
                     pass
-            else:
-                pass
+        else:
+        # print(CommVariables.slider_1_value)
+            go_to_pos = [round(CommVariables.slider_1_value * math.pi / 180, 2),
+                round(CommVariables.slider_2_value * math.pi / 180, 2),
+                round(CommVariables.slider_3_value * math.pi / 180, 2),
+                round(CommVariables.slider_4_value * math.pi / 180, 2),
+                round(CommVariables.slider_5_value * math.pi / 180, 2),
+                round(CommVariables.slider_6_value * math.pi / 180, 2)]
+
+            for i in range(0, 6):
+                if go_to_pos != None:
+                    if go_to_pos[i] < self.act_pos[i]:
+                        self.pub_pos[i] = round(self.act_pos[i] - 0.01, 2)
+                    elif go_to_pos[i] > self.act_pos[i]:
+                        self.pub_pos[i] = round(self.act_pos[i] + 0.01, 2)
+                    else:
+                        pass
+
+            self.ref_pos = go_to_pos
 
         self.to_r.name = self.joint_names
         self.to_r.position = self.pub_pos
         self.joint_cmd_publisher_.publish(self.to_r)
         
     def interfacer_to_sp_publisher_callback(self):
+        print(CommVariables.gui_control_enabled)
         self.to_sp.data = self.get_static_joint_pose()
         self.state_to_sp_publisher_.publish(self.to_sp)
 
@@ -418,7 +582,8 @@ def main(args=None):
 
     launch_robot()    
     launch_window()
-    
 
+    # print(ros2_mecademic_sim.active_button) # = clock.active_button
+    
 if __name__ == '__main__':
     main()
