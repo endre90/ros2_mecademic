@@ -1,13 +1,3 @@
-#!/usr/bin/env python
-
-#----------------------------------------------------------------------------------------------------------------------#
-# authors, description, version
-#----------------------------------------------------------------------------------------------------------------------#
-    # Endre Eres
-    # Universal Robots UR10 Pose Updater
-    # V.1.3.1.
-#----------------------------------------------------------------------------------------------------------------------#
-
 import os
 import sys
 import rclpy
@@ -16,48 +6,50 @@ import csv
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-from ros2_mecademic_msgs.msg import Meca500SPToPoseUpdater
-from ros2_mecademic_msgs.msg import Meca500PoseUpdaterToSP
+from ros2_mecademic_msgs.msg import MecademicGuiToUtilities
+from ros2_mecademic_msgs.msg import MecademicUtilitiesToGui
 from ament_index_python.packages import get_package_share_directory
 
-class MecaPoseUpdater(Node):
+class Ros2MecademicUtilities(Node):
 
     def __init__(self):
-        super().__init__("ros2_mecademic_utils")
+        super().__init__("ros2_mecademic_utilities")
 
-        self.from_sp = Meca500SPToPoseUpdater()
-        self.to_sp = Meca500PoseUpdaterToSP()
-        self.from_robot = JointState()
+        self.gui_to_utilities = MecademicGuiToUtilities()
+        self.utilities_to_gui = MecademicUtilitiesToGui()
+        self.joint_state = JointState()
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.prev_action = ""
         self.prev_pose_name = ""
 
-        self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utils'),
+        self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_poses.csv')
-        self.joints_oldposes = os.path.join(get_package_share_directory('ros2_mecademic_utils'),
+        self.joints_oldposes = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_oldposes.csv')
-        self.joints_newposes = os.path.join(get_package_share_directory('ros2_mecademic_utils'),
+        self.joints_newposes = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_newposes.csv')
 
-        self.joint_subscriber = self.create_subscription(
+        self.joint_state_subscriber = self.create_subscription(
             JointState, 
-            "/meca_500_joint_states",
+            "/mecademic_joint_states",
             self.joint_callback,
             10)
 
-        self.cmd_subscriber = self.create_subscription(
-            Meca500SPToPoseUpdater, 
-            "/meca_500_sp_to_pose_updater",
-            self.sp_callback,
+        self.gui_to_utilities_subscriber = self.create_subscription(
+            MecademicGuiToUtilities, 
+            "/mecademic_gui_to_utilities",
+            self.gui_to_utilities_callback,
             10)
 
-        self.response_publisher = self.create_publisher(
-            Meca500PoseUpdaterToSP,
-            "/meca_500_pose_updater_to_sp",
-            10)
+        time.sleep(2)
 
-        self.meca_links = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
+        # self.utilities_to_gui_publisher = self.create_publisher(
+        #     Meca500PoseUpdaterToSP,
+        #     "/meca_500_pose_updater_to_sp",
+        #     10)
+
+        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"] 
 
 
