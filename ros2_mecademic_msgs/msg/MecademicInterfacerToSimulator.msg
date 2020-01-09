@@ -1,2 +1,0 @@
-bool gui_control_enabled
-sensor_msgs/JointState gui_joint_control

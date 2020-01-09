@@ -27,10 +27,14 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(ros2_mecademic_msgs
-  "msg/Meca500SPToPoseUpdater.msg"
-  "msg/Meca500PoseUpdaterToSP.msg"
+  "msg/MecademicDriverToInterfacer.msg"
   "msg/MecademicGuiToInterfacer.msg"
+  "msg/MecademicGuiToUtilities.msg"
   "msg/MecademicInterfacerToDriver.msg"
+  "msg/MecademicInterfacerToGui.msg"
+  "msg/MecademicSPToUtilities.msg"
+  "msg/MecademicUtilitiesToGui.msg"
+  "msg/MecademicUtilitiesToSP.msg"
   DEPENDENCIES builtin_interfaces
 )
 

@@ -1,0 +1,2 @@
+string action
+string pose_name
