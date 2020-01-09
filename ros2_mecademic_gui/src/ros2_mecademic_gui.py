@@ -11,7 +11,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import JointState
 from ros2_mecademic_msgs.msg import MecademicGuiToInterfacer
 # from ros2_mecademic_msgs import MecademicInterfacerToGui
-# from ros2_mecademic_msgs import MecademicGuiToUtilities
+from ros2_mecademic_msgs.msg import MecademicGuiToUtilities
 # from ros2_mecademic_msgs import MecademicUtilitiesToGui
 from ament_index_python.packages import get_package_share_directory
 
@@ -28,6 +28,7 @@ class CommVariables():
     slider_4_value = 0
     slider_5_value = 0
     slider_6_value = 0
+    pose_name = ""
     def __init__(self, parent=None):
         super(CommVariables, self).__init__()
 
@@ -447,6 +448,11 @@ class Window(QWidget, CommVariables):
         self.pose_saver_box.setLayout(self.pose_saver_box_layout)
         self.pose_saver_box.setEnabled(False)
 
+        def pose_saver_button_clicked():
+            CommVariables.pose_name = self.pose_saver_line.text()
+
+        self.pose_saver_button.clicked.connect(pose_saver_button_clicked)
+
         # populate the grid with widgets:
         for slider_box in self.slider_boxes:
             grid.addWidget(slider_box, self.slider_boxes.index(slider_box), 0)
@@ -477,14 +483,18 @@ class Ros2MecademicGui(Node, CommVariables):
 
         self.gui_to_interfacer = MecademicGuiToInterfacer()
         # self.interfacer_to_gui = MecademicInterfacerToGui()
-        # self.gui_to_utilities = MecademicGuiToUtilities()
+        self.gui_to_utilities = MecademicGuiToUtilities()
         # self.utilities_to_gui = MecademicUtilitiesToGui()
 
         self.gui_to_interfacer.gui_control_enabled = False
         self.gui_to_interfacer.gui_speed_control = 0
         self.gui_to_interfacer.gui_joint_control = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
+        self.gui_to_utilities.action = ""
+        self.gui_to_utilities.pose_name = ""
+
         self.gui_to_interfacer_timer_period = 0.05
+        self.gui_to_utilities_timer_period = 0.5
 
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
@@ -510,19 +520,19 @@ class Ros2MecademicGui(Node, CommVariables):
             "/mecademic_gui_to_interfacer",
             10)
         
-        # self.gui_to_utilities_publisher_ = self.create_publisher(
-        #     MecademicGuiToUtilities,
-        #     "/mecademic_gui_to_utilities",
-        #     10)
+        self.gui_to_utilities_publisher_ = self.create_publisher(
+            MecademicGuiToUtilities,
+            "/mecademic_gui_to_utilities",
+            10)
 
         # Decouple message receiving and forwarding
         self.gui_to_interfacer_timer = self.create_timer(
             self.gui_to_interfacer_timer_period, 
             self.mecademic_gui_to_interfacer_callback)
 
-        # self.gui_to_utilities_timer = self.create_timer(
-        #     self.gui_to_utilities_timer_period, 
-        #     self.mecademic_gui_to_utilities_callback)
+        self.gui_to_utilities_timer = self.create_timer(
+            self.gui_to_utilities_timer_period, 
+            self.mecademic_gui_to_utilities_callback)
         
     def mecademic_gui_to_interfacer_callback(self):
         self.gui_to_interfacer.gui_control_enabled = CommVariables.gui_control_enabled
@@ -539,6 +549,12 @@ class Ros2MecademicGui(Node, CommVariables):
         self.gui_to_interfacer.gui_joint_control[4] = CommVariables.slider_5_value * math.pi / 180
         self.gui_to_interfacer.gui_joint_control[5] = CommVariables.slider_6_value * math.pi / 180
         self.gui_to_interfacer_publisher_.publish(self.gui_to_interfacer)
+
+    def mecademic_gui_to_utilities_callback(self):
+        self.gui_to_utilities.action = "update" # connect this to gui when adding functionality
+        self.gui_to_utilities.pose_name = CommVariables.pose_name
+        self.gui_to_utilities_publisher_.publish(self.gui_to_utilities)
+
 
 def main(args=None):
 

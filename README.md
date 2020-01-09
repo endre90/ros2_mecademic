@@ -11,8 +11,6 @@ In Rviz2, select `/meca_500_description`
 See where the robot is on the `/meca_500_interfacer_to_sp` topic -->
 
 TODO:
-
-    1.  Add actual msgs to communicate instead of strings
-    2.  Include robot speed control correctly (no flickering)
-    3.  Maybe, try MoveIt2 on this example?
-    4.  Finalize pose saver
+    1.  Maybe, try MoveIt2 on this example?
+    2.  Finalize pose saver - pose saving actually works from gui
+    3.  add error msgs to gui and error handling

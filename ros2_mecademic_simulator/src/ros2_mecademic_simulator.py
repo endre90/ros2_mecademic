@@ -86,12 +86,7 @@ class Ros2MecademicSimulator(Node):
         self.gui_joint_control[4] = round(data.gui_joint_control[4], 2)
         self.gui_joint_control[5] = round(data.gui_joint_control[5], 2)
 
-    def joint_state_publisher_callback(self):
-
-        # self.publish_rate = self.joint_state_timer_period
-        # if self.gui_speed_control != 0:
-        #     self.joint_state_timer_period = 0.005*(1/self.gui_speed_control)
-        
+    def joint_state_publisher_callback(self):        
         if self.gui_control_enabled == True:
             for i in range(0, 6):
                 if self.gui_joint_control != None:

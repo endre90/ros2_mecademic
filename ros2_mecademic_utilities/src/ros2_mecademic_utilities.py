@@ -192,7 +192,7 @@ class Ros2MecademicUtilities(Node):
         self.act_pos[5] = data.position[5]
 
 
-    def sp_callback(self, data):
+    def gui_to_utilities_callback(self, data):
         '''
         Evaluate and consume command messages from Sequence Planner
         '''
@@ -225,11 +225,11 @@ class Ros2MecademicUtilities(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    ros2_mecademic_utils = MecaPoseUpdater()
+    ros2_mecademic_utilities = Ros2MecademicUtilities()
 
-    rclpy.spin(ros2_mecademic_utils)
+    rclpy.spin(ros2_mecademic_utilities)
 
-    ros2_mecademic_utils.destroy_node()
+    ros2_mecademic_utilities.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

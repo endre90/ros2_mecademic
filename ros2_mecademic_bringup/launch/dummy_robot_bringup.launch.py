@@ -36,8 +36,8 @@ def generate_launch_description():
                output='screen'),
           Node(package='ros2_mecademic_gui', node_executable='ros2_mecademic_gui',
                output='screen'),
-          # Node(package='ros2_mecademic_utilities', node_executable='ros2_mecademic_utilities',
-          #      output='screen'),
+          Node(package='ros2_mecademic_utilities', node_executable='ros2_mecademic_utilities',
+               output='screen'),
           Node(package='rviz2', node_executable='rviz2',
                output='screen'),
      ])
