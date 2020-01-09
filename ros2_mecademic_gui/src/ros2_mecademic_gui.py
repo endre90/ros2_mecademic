@@ -1,13 +1,18 @@
 import sys
-import rclpy
 import time
 import csv
 import os
 import math
+import threading
+
+import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-import threading
+from ros2_mecademic_msgs.msg import MecademicGuiToInterfacer
+# from ros2_mecademic_msgs import MecademicInterfacerToGui
+# from ros2_mecademic_msgs import MecademicGuiToUtilities
+# from ros2_mecademic_msgs import MecademicUtilitiesToGui
 from ament_index_python.packages import get_package_share_directory
 
 from PyQt5.QtWidgets import *
@@ -16,6 +21,7 @@ from PyQt5.QtGui import *
 
 class CommVariables():
     gui_control_enabled = False
+    speed_slider_value = 0
     slider_1_value = 0
     slider_2_value = 0
     slider_3_value = 0
@@ -24,6 +30,39 @@ class CommVariables():
     slider_6_value = 0
     def __init__(self, parent=None):
         super(CommVariables, self).__init__()
+
+# class QDoubleSlider(QSlider):
+
+#     # create our our signal that we can connect to if necessary
+#     doubleValueChanged = pyqtSignal(float)
+
+#     def __init__(self, decimals = 5, *args, **kargs):
+#         super(QDoubleSlider, self).__init__( *args, **kargs)
+#         self._multi = 10 ** decimals
+
+#         self.valueChanged.connect(self.emitDoubleValueChanged)
+
+#     def emitDoubleValueChanged(self):
+#         value = float(super(QDoubleSlider, self).value())/self._multi
+#         self.doubleValueChanged.emit(value)
+
+#     def value(self):
+#         return float(super(QDoubleSlider, self).value()) / self._multi
+
+#     def setMinimum(self, value):
+#         return super(QDoubleSlider, self).setMinimum(value * self._multi)
+
+#     def setMaximum(self, value):
+#         return super(QDoubleSlider, self).setMaximum(value * self._multi)
+
+#     def setSingleStep(self, value):
+#         return super(QDoubleSlider, self).setSingleStep(value * self._multi)
+
+#     def singleStep(self):
+#         return float(super(QDoubleSlider, self).singleStep()) / self._multi
+
+#     def setValue(self, value):
+#         super(QDoubleSlider, self).setValue(int(value * self._multi))
 
 class Window(QWidget, CommVariables):
     def __init__(self, parent=None):
@@ -34,7 +73,7 @@ class Window(QWidget, CommVariables):
 
         minimum = -180
         maximum = 180
-        step = 1
+        step = 0.0001
 
         grid = QGridLayout()
 
@@ -271,6 +310,10 @@ class Window(QWidget, CommVariables):
 
                 for button in self.buttons:
                     button.setEnabled(True)
+
+                self.speed_box.setEnabled(True)
+                self.pose_saver_box.setEnabled(True)
+
             else:
                 CommVariables.gui_control_enabled = False
                 for slider in self.sliders:
@@ -287,6 +330,9 @@ class Window(QWidget, CommVariables):
 
                 for button in self.buttons:
                     button.setEnabled(False)
+
+                self.speed_box.setEnabled(False)
+                self.pose_saver_box.setEnabled(False)
 
         self.radio_1.toggled.connect(radio_state)
 
@@ -360,16 +406,46 @@ class Window(QWidget, CommVariables):
         self.slider_5_value = self.slider_5.value()
         self.slider_6_value = self.slider_6.value()
 
+        # speedwidget:
+        self.speed_box = QGroupBox("robot_speed")
+        self.speed_box_layout = QHBoxLayout()
+        self.speed_slider = QSlider(Qt.Horizontal)
+        self.speed_slider.setFocusPolicy(Qt.StrongFocus)
+        self.speed_slider.setTickPosition(QSlider.TicksBothSides)
+        self.speed_slider.setMinimum(0)
+        self.speed_slider.setMaximum(100)
+        self.speed_slider.setSingleStep(step)
+        self.speed_slider.setMinimumWidth(300)
+        self.speed_line = QLineEdit("%")
+        self.speed_line.setMaximumWidth(55)
+        self.speed_button = QPushButton("set")
+        self.speed_box_layout.addWidget(self.speed_slider)
+        self.speed_box_layout.addWidget(self.speed_line)
+        self.speed_box_layout.addWidget(self.speed_button)
+        self.speed_box.setLayout(self.speed_box_layout)
+        self.speed_box.setEnabled(False)
+
+        def speed_slider_change():
+            CommVariables.speed_slider_value = self.speed_slider.value()
+
+        def speed_button_clicked():
+            self.speed_slider.setValue(int(self.speed_line.text()))
+
+        self.speed_button.clicked.connect(speed_button_clicked)
+        self.speed_slider_value = self.speed_slider.value()
+        self.speed_slider.valueChanged.connect(speed_slider_change)
+
         # pose saver widget:
         self.pose_saver_box = QGroupBox("pose_saver")
         self.pose_saver_box_layout = QHBoxLayout()
         self.pose_saver_label = QLabel("pose_name")
-        self.pose_saver_line = QLineEdit()
+        self.pose_saver_line = QLineEdit("some_pose_name")
         self.pose_saver_button = QPushButton("update")
         self.pose_saver_box_layout.addWidget(self.pose_saver_label)
         self.pose_saver_box_layout.addWidget(self.pose_saver_line)
         self.pose_saver_box_layout.addWidget(self.pose_saver_button)
         self.pose_saver_box.setLayout(self.pose_saver_box_layout)
+        self.pose_saver_box.setEnabled(False)
 
         # populate the grid with widgets:
         for slider_box in self.slider_boxes:
@@ -384,8 +460,9 @@ class Window(QWidget, CommVariables):
         for line_box in self.line_boxes:
             grid.addWidget(line_box, self.line_boxes.index(line_box), 3)
     
-        grid.addWidget(self.pose_saver_box, 6, 0, 1, 4)
-        grid.addWidget(self.radio_1, 7, 0)
+        grid.addWidget(self.speed_box, 6, 0, 1, 4)
+        grid.addWidget(self.pose_saver_box, 7, 0, 1, 4)
+        grid.addWidget(self.radio_1, 8, 0)
 
 
         self.setLayout(grid)
@@ -393,183 +470,86 @@ class Window(QWidget, CommVariables):
         self.setWindowTitle("Meca 500 joint pose controller")
         self.resize(550, 250)
 
-
-class Meca500R3Sim(Node, CommVariables):
+class Ros2MecademicGui(Node, CommVariables):
 
     def __init__(self):
-        super().__init__("ros2_mecademic_sim")
+        super().__init__("ros2_mecademic_gui")
 
-        # self.cv = CommVariables()
-        # self.active_button = False
+        self.gui_to_interfacer = MecademicGuiToInterfacer()
+        # self.interfacer_to_gui = MecademicInterfacerToGui()
+        # self.gui_to_utilities = MecademicGuiToUtilities()
+        # self.utilities_to_gui = MecademicUtilitiesToGui()
 
-        self.from_sp = String()
-        self.to_sp = String()
-        self.from_r = JointState()
-        self.to_r = JointState()
+        self.gui_to_interfacer.gui_control_enabled = False
+        self.gui_to_interfacer.gui_speed_control = 0
+        self.gui_to_interfacer.gui_joint_control = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-        self.joint_tolerance = 0.05
-        self.tmr_period = 0.02
-        self.tmr_period2 = 0.5
+        self.gui_to_interfacer_timer_period = 0.05
 
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
 
-        self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utils'),
-            'poses', 'joint_poses.csv')
-
-        self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.ref_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.pub_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-        self.act_pos_str = ""
-        self.ref_pos_str = ""
-
         # Could be good to start the subscribers first so that they update the variables if other nodes are up
-        self.joint_subscriber = self.create_subscription(
-            JointState, 
-            "/meca_500_joint_states",
-            self.joint_callback,
-            10)
+        # self.interfacer_to_gui_subscriber = self.create_subscription(
+        #     MecademicInterfacerToGui, 
+        #     "/mecademic_interfacer_to_gui",
+        #     self.mecademic_interfacer_to_gui_callback,
+        #     10)
 
-        # Could be good to start the subscribers first so that they update the variables if other nodes are up
-        self.cmd_subscriber = self.create_subscription(
-            String, 
-            "/meca_500_sp_to_interfacer",
-            self.sp_callback,
-            10)
+        # self.utilities_to_gui_subscriber = self.create_subscription(
+        #     MecademicUtilitiesToGui, 
+        #     "/mecademic_utilities_to_gui",
+        #     self.mecademic_utilities_to_gui_callback,
+        #     10)
 
-        # Then sleep for a bit so that the node get the updated variables before publishing them
+        # Then sleep for a bit so that the node gets the updated variables before publishing them
         time.sleep(2)
 
-        self.state_to_sp_publisher_ = self.create_publisher(
-            String,
-            "/meca_500_interfacer_to_sp",
+        self.gui_to_interfacer_publisher_ = self.create_publisher(
+            MecademicGuiToInterfacer,
+            "/mecademic_gui_to_interfacer",
             10)
         
-        self.joint_cmd_publisher_ = self.create_publisher(
-            JointState,
-            "/meca_500_joint_states",
-            10)
-    
+        # self.gui_to_utilities_publisher_ = self.create_publisher(
+        #     MecademicGuiToUtilities,
+        #     "/mecademic_gui_to_utilities",
+        #     10)
+
         # Decouple message receiving and forwarding
-        self.interfacer_to_sp_tmr = self.create_timer(
-            self.tmr_period2, 
-            self.interfacer_to_sp_publisher_callback)
+        self.gui_to_interfacer_timer = self.create_timer(
+            self.gui_to_interfacer_timer_period, 
+            self.mecademic_gui_to_interfacer_callback)
 
-        self.interfacer_to_r_tmr = self.create_timer(
-            self.tmr_period, 
-            self.interfacer_to_r_publisher_callback)
-
-    def joint_callback(self, data):
-        self.act_pos[0] = data.position[0]
-        self.act_pos[1] = data.position[1]
-        self.act_pos[2] = data.position[2]
-        self.act_pos[3] = data.position[3]
-        self.act_pos[4] = data.position[4]
-        self.act_pos[5] = data.position[5]
-
-    def sp_callback(self, data):
-        self.ref_pos = self.find_pose(data.data, self.joints_input)
-        print(self.ref_pos)
-
-    def interfacer_to_r_publisher_callback(self):
-        if CommVariables.gui_control_enabled == False:
-            for i in range(0, 6):
-                if self.ref_pos != None:
-                    if self.ref_pos[i] < self.act_pos[i]:
-                        self.pub_pos[i] = round(self.act_pos[i] - 0.01, 2)
-                    elif self.ref_pos[i] > self.act_pos[i]:
-                        self.pub_pos[i] = round(self.act_pos[i] + 0.01, 2)
-                    else:
-                        pass
-                else:
-                    pass
-        else:
-        # print(CommVariables.slider_1_value)
-            go_to_pos = [round(CommVariables.slider_1_value * math.pi / 180, 2),
-                round(CommVariables.slider_2_value * math.pi / 180, 2),
-                round(CommVariables.slider_3_value * math.pi / 180, 2),
-                round(CommVariables.slider_4_value * math.pi / 180, 2),
-                round(CommVariables.slider_5_value * math.pi / 180, 2),
-                round(CommVariables.slider_6_value * math.pi / 180, 2)]
-
-            for i in range(0, 6):
-                if go_to_pos != None:
-                    if go_to_pos[i] < self.act_pos[i]:
-                        self.pub_pos[i] = round(self.act_pos[i] - 0.01, 2)
-                    elif go_to_pos[i] > self.act_pos[i]:
-                        self.pub_pos[i] = round(self.act_pos[i] + 0.01, 2)
-                    else:
-                        pass
-
-            self.ref_pos = go_to_pos
-
-        self.to_r.name = self.joint_names
-        self.to_r.position = self.pub_pos
-        self.joint_cmd_publisher_.publish(self.to_r)
+        # self.gui_to_utilities_timer = self.create_timer(
+        #     self.gui_to_utilities_timer_period, 
+        #     self.mecademic_gui_to_utilities_callback)
         
-    def interfacer_to_sp_publisher_callback(self):
-        print(CommVariables.gui_control_enabled)
-        self.to_sp.data = self.get_static_joint_pose()
-        self.state_to_sp_publisher_.publish(self.to_sp)
+    def mecademic_gui_to_interfacer_callback(self):
+        self.gui_to_interfacer.gui_control_enabled = CommVariables.gui_control_enabled
 
-    def find_pose(self, name, input_f):
-        '''
-        Returns the saved pose that matches the pose name
-        '''
-
-        pose = []
-        with open(input_f, 'r') as f_in:
-            csv_reader = csv.reader(f_in, delimiter=':')
-            for row in csv_reader:
-                if name == row[0]:
-                    pose = ast.literal_eval(row[1])
-                    break
-                else:
-                    pass
-
-        if pose != []:
-            self.pose_name_error = ''
-            return pose
+        if CommVariables.speed_slider_value >= 0 and CommVariables.speed_slider_value <= 100:
+            self.gui_to_interfacer.gui_speed_control = CommVariables.speed_slider_value
         else:
             pass
-            # self.pose_name_error = 'pose with the name ' + name + ' not saved'
-            # return []
 
-    def get_static_joint_pose(self):
-        '''
-        Returns the saved pose name that matches the pose
-        '''
-
-        actual_joint_pose = ""
-        current_pose = self.act_pos
-
-        with open(self.joints_input, 'r') as joint_csv:
-            joint_csv_reader = csv.reader(joint_csv, delimiter=':')
-            for row in joint_csv_reader:
-                if len(ast.literal_eval(row[1])) == 6 and current_pose != []:
-                    saved_pose = ast.literal_eval(row[1])
-                    if all(numpy.isclose(current_pose[i], saved_pose[i], atol=self.joint_tolerance) for i in range(0, 6)):
-                        actual_joint_pose = row[0]
-                        break
-                    else:
-                        actual_joint_pose = "UNKNOWN"
-                        pass
-                else:
-                    pass
-        
-        return actual_joint_pose
+        self.gui_to_interfacer.gui_joint_control[0] = CommVariables.slider_1_value * math.pi / 180
+        self.gui_to_interfacer.gui_joint_control[1] = CommVariables.slider_2_value * math.pi / 180
+        self.gui_to_interfacer.gui_joint_control[2] = CommVariables.slider_3_value * math.pi / 180
+        self.gui_to_interfacer.gui_joint_control[3] = CommVariables.slider_4_value * math.pi / 180
+        self.gui_to_interfacer.gui_joint_control[4] = CommVariables.slider_5_value * math.pi / 180
+        self.gui_to_interfacer.gui_joint_control[5] = CommVariables.slider_6_value * math.pi / 180
+        self.gui_to_interfacer_publisher_.publish(self.gui_to_interfacer)
 
 def main(args=None):
 
-    def launch_robot():
-        def launch_robot_callback_local():
+    def launch_node():
+        def launch_node_callback_local():
             rclpy.init(args=args)
-            ros2_mecademic_sim = Meca500R3Sim()
-            rclpy.spin(ros2_mecademic_sim)
-            ros2_mecademic_sim.destroy_node()
+            ros2_mecademic_gui = Ros2MecademicGui()
+            rclpy.spin(ros2_mecademic_gui)
+            ros2_mecademic_gui.destroy_node()
             rclpy.shutdown()
-        t = threading.Thread(target=launch_robot_callback_local)
+        t = threading.Thread(target=launch_node_callback_local)
         t.daemon = True
         t.start()
     
@@ -580,10 +560,8 @@ def main(args=None):
         clock.show()
         sys.exit(app.exec_())
 
-    launch_robot()    
+    launch_node()    
     launch_window()
 
-    # print(ros2_mecademic_sim.active_button) # = clock.active_button
-    
 if __name__ == '__main__':
     main()

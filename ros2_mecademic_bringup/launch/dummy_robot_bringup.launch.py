@@ -30,10 +30,14 @@ def generate_launch_description():
         # Node(package='sp_dummy_map_server', node_executable='dummy_map_server', output='screen'),
           Node(package='ros2_mecademic_state_publisher', node_executable='ros2_mecademic_state_publisher',
                output='screen', arguments=[urdf1]), #parameters=[config]
-          Node(package='ros2_mecademic_sim', node_executable='ros2_mecademic_sim',
+          Node(package='ros2_mecademic_simulator', node_executable='ros2_mecademic_simulator',
                output='screen'),
-          Node(package='ros2_mecademic_utils', node_executable='ros2_mecademic_utils',
+          Node(package='ros2_mecademic_interfacer', node_executable='ros2_mecademic_interfacer',
                output='screen'),
+          Node(package='ros2_mecademic_gui', node_executable='ros2_mecademic_gui',
+               output='screen'),
+          # Node(package='ros2_mecademic_utilities', node_executable='ros2_mecademic_utilities',
+          #      output='screen'),
           Node(package='rviz2', node_executable='rviz2',
                output='screen'),
      ])

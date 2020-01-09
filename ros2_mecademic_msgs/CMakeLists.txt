@@ -17,6 +17,8 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -24,9 +26,11 @@ find_package(ament_cmake REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(ros2_ros1_messages
+rosidl_generate_interfaces(ros2_mecademic_msgs
   "msg/Meca500SPToPoseUpdater.msg"
   "msg/Meca500PoseUpdaterToSP.msg"
+  "msg/MecademicGuiToInterfacer.msg"
+  "msg/MecademicInterfacerToDriver.msg"
   DEPENDENCIES builtin_interfaces
 )
 
