@@ -4,16 +4,14 @@
   <name>ros2_mecademic_bringup</name>
   <version>0.0.1</version>
   <description>
-    simulated meca 500 robot bringup
+    Launch package for the ROS2 Mecademic robot suite
   </description>
-  <maintainer email="endree@todo.org">endree</maintainer>
+  <maintainer email="endree@chalmers.se">endre_eros</maintainer>
   <license>no_license</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>ament_index_python</exec_depend>
-  <exec_depend>dummy_map_server</exec_depend>
-  <exec_depend>dummy_sensors</exec_depend>
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>

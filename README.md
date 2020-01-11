@@ -1,16 +1,26 @@
 # ros2_mecademic
 
-An unofficial ROS2 (eloquent) interface for the Mecademic robots
+## quickstart
 
-`ros2 launch ros2_mecademic_bringup dummy_robot_bringup.launch.py`
+The ROS2 Mecademic robot suite (unofficial).
 
-In Rviz2, select `/meca_500_description`
+The suite provides three modes:
+1. Emulator:
 
-<!-- Publish a command, `at` or `away`, on the `/meca_500_sp_to_interfacer`
+    `ros2 launch ros2_mecademic_bringup bringup_emulator.launch.py`
 
-See where the robot is on the `/meca_500_interfacer_to_sp` topic -->
+2. Simulator:
 
-TODO:
-    1.  Maybe, try MoveIt2 on this example?
-    2.  Finalize pose saver - pose saving actually works from gui
-    3.  add error msgs to gui and error handling
+    `ros2 launch ros2_mecademic_bringup bringup_simulator.launch.py`
+
+3. Driver:
+
+    `ros2 launch ros2_mecademic_bringup bringup_driver.launch.py`
+
+## ros distro support
+
+|         | eloquent |
+|:-------:|:------:|
+| Branch  | [`master`](https://github.com/endre90/ros2_mecademic) |)
+| Status  |  supported |
+| Version | [version] 0.01 | 

@@ -1,3 +1,5 @@
-# ROS2 Version of Robot State Publisher
+## ros2_mecademic_state_publisher
 
-This package contains a forked version of the original ROS Robot State Publisher with all modifications to compile within a ROS2 Ecosystem.
+Robot state publisher for the ROS2 Mecademic robot suite.
+
+Basically a convenience copy of the original: https://github.com/ros/robot_state_publisher
