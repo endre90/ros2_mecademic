@@ -1,0 +1,8 @@
+string actual_pose
+string actual_joint_speed
+string[] saved_poses
+string last_utility_action
+string echo_reference_pose
+string echo_reference_joint_speed
+string echo_utility_action
+string echo_utility_pose_name

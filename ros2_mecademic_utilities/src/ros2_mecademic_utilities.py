@@ -6,8 +6,8 @@ import csv
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-from ros2_mecademic_msgs.msg import MecademicGuiToUtilities
-from ros2_mecademic_msgs.msg import MecademicUtilitiesToGui
+from ros2_mecademic_msgs.msg import MecademicUtilsToEsd
+from ros2_mecademic_msgs.msg import MecademicEsdToUtils
 from ament_index_python.packages import get_package_share_directory
 
 class Ros2MecademicUtilities(Node):
@@ -15,13 +15,22 @@ class Ros2MecademicUtilities(Node):
     def __init__(self):
         super().__init__("ros2_mecademic_utilities")
 
-        self.gui_to_utilities = MecademicGuiToUtilities()
-        self.utilities_to_gui = MecademicUtilitiesToGui()
+        self.utils_to_esd_msg = MecademicUtilsToEsd()
         self.joint_state = JointState()
+
+        self.utils_to_esd_timer_period = 0.5
+
+        self.utils_to_esd_msg.actual_pose = ""
+        self.utils_to_esd_msg.saved_poses = []
+        self.utils_to_esd_msg.echo_utility_action = ""
+        self.utils_to_esd_msg.echo_utility_pose_name = ""
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.prev_action = ""
         self.prev_pose_name = ""
+
+        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
+            "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_poses.csv')
@@ -36,22 +45,22 @@ class Ros2MecademicUtilities(Node):
             self.joint_callback,
             10)
 
-        self.gui_to_utilities_subscriber = self.create_subscription(
-            MecademicGuiToUtilities, 
-            "/mecademic_gui_to_utilities",
-            self.gui_to_utilities_callback,
+        self.esd_to_utils_subscriber = self.create_subscription(
+            MecademicEsdToUtils, 
+            "/mecademic_esd_to_utils",
+            self.esd_to_utils_callback,
             10)
 
         time.sleep(2)
 
-        # self.utilities_to_gui_publisher = self.create_publisher(
-        #     Meca500PoseUpdaterToSP,
-        #     "/meca_500_pose_updater_to_sp",
-        #     10)
+        self.utils_to_esd_publisher_ = self.create_publisher(
+            MecademicUtilsToEsd,
+            "/mecademic_utils_to_esd",
+            10)
 
-        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
-            "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"] 
-
+        self.utils_to_esd_timer = self.create_timer(
+            self.utils_to_esd_timer_period, 
+            self.utils_to_esd_callback)
 
     def delete_pose(self, input_f, newpose_f, pose_name):
         '''
@@ -191,14 +200,26 @@ class Ros2MecademicUtilities(Node):
         self.act_pos[4] = data.position[4]
         self.act_pos[5] = data.position[5]
 
+    def read_and_generate_pose_list(self, input_f):
+        '''
+        Acquire the names of all saved poses from a file to a list.
+        '''
 
-    def gui_to_utilities_callback(self, data):
+        pose_list = []
+        with open(input_f, 'r') as f_in:
+            csv_input = csv.reader(f_in, delimiter=':')
+            for row in csv_input:
+                pose_list.append(row[0])
+            return pose_list
+
+
+    def esd_to_utils_callback(self, data):
         '''
         Evaluate and consume command messages from Sequence Planner
         '''
 
-        self.action = data.action
-        self.pose_name = data.pose_name
+        self.action = data.utility_action
+        self.pose_name = data.utility_pose_name
 
         if self.action == self.prev_action and \
            self.pose_name == self.prev_pose_name:
@@ -221,6 +242,10 @@ class Ros2MecademicUtilities(Node):
                 self.uninhibit_tick()
         else:
             pass
+
+    def utils_to_esd_callback(self):
+        self.utils_to_esd_msg.saved_poses = self.read_and_generate_pose_list(self.joints_input)
+        self.utils_to_esd_publisher_.publish(self.utils_to_esd_msg)
 
 def main(args=None):
     rclpy.init(args=args)

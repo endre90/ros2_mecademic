@@ -12,8 +12,6 @@ def generate_launch_description():
                output='screen', arguments=[urdf1]),
           Node(package='ros2_mecademic_simulator', node_executable='ros2_mecademic_simulator',
                output='screen'),
-          Node(package='ros2_mecademic_interfacer', node_executable='ros2_mecademic_interfacer',
-               output='screen'),
           Node(package='ros2_mecademic_gui', node_executable='ros2_mecademic_gui',
                output='screen'),
           Node(package='ros2_mecademic_utilities', node_executable='ros2_mecademic_utilities',

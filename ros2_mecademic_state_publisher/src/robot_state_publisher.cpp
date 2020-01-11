@@ -83,9 +83,9 @@ RobotStatePublisher::RobotStatePublisher(
   addChildren(tree.getRootSegment());
 
   model_xml_.data = model_xml;
-  node_handle->declare_parameter("meca_500_description", model_xml);
+  node_handle->declare_parameter("mecademic_description", model_xml);
   description_pub_ = node_handle->create_publisher<std_msgs::msg::String>(
-    "meca_500_description",
+    "mecademic_description",
     // Transient local is similar to latching in ROS 1.
     rclcpp::QoS(1).transient_local());
 }

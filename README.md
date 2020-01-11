@@ -9,7 +9,7 @@ The suite provides three modes:
 2. Simulator: `ros2 launch ros2_mecademic_bringup bringup_simulator.launch.py`
 3. Driver: `ros2 launch ros2_mecademic_bringup bringup_driver.launch.py`
 
-## ros distro support
+## ros2 distro support
 
 |         | eloquent |
 |:-------:|:------:|

@@ -9,10 +9,8 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-from ros2_mecademic_msgs.msg import MecademicGuiToInterfacer
-# from ros2_mecademic_msgs import MecademicInterfacerToGui
-from ros2_mecademic_msgs.msg import MecademicGuiToUtilities
-# from ros2_mecademic_msgs import MecademicUtilitiesToGui
+from ros2_mecademic_msgs.msg import MecademicGuiToEsd
+from ros2_mecademic_msgs.msg import MecademicEsdToGui
 from ament_index_python.packages import get_package_share_directory
 
 from PyQt5.QtWidgets import *
@@ -29,6 +27,9 @@ class CommVariables():
     slider_5_value = 0
     slider_6_value = 0
     pose_name = ""
+    actual_pose = ""
+    actual_joint_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    saved_poses = ""
     def __init__(self, parent=None):
         super(CommVariables, self).__init__()
 
@@ -470,7 +471,6 @@ class Window(QWidget, CommVariables):
         grid.addWidget(self.pose_saver_box, 7, 0, 1, 4)
         grid.addWidget(self.radio_1, 8, 0)
 
-
         self.setLayout(grid)
 
         self.setWindowTitle("Meca 500 joint pose controller")
@@ -481,80 +481,75 @@ class Ros2MecademicGui(Node, CommVariables):
     def __init__(self):
         super().__init__("ros2_mecademic_gui")
 
-        self.gui_to_interfacer = MecademicGuiToInterfacer()
-        # self.interfacer_to_gui = MecademicInterfacerToGui()
-        self.gui_to_utilities = MecademicGuiToUtilities()
-        # self.utilities_to_gui = MecademicUtilitiesToGui()
+        self.gui_to_esd_msg = MecademicGuiToEsd()
+        self.joint_state = JointState()
 
-        self.gui_to_interfacer.gui_control_enabled = False
-        self.gui_to_interfacer.gui_speed_control = 0
-        self.gui_to_interfacer.gui_joint_control = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.gui_to_esd_msg.gui_control_enabled = False
+        self.gui_to_esd_msg.gui_speed_control = 0
+        self.gui_to_esd_msg.gui_joint_control = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.gui_to_esd_msg.utility_action = ""
+        self.gui_to_esd_msg.utility_pose_name = ""
 
-        self.gui_to_utilities.action = ""
-        self.gui_to_utilities.pose_name = ""
+        self.actual_pose = ""
+        self.actual_joint_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.saved_poses = []
 
-        self.gui_to_interfacer_timer_period = 0.05
-        self.gui_to_utilities_timer_period = 0.5
+        self.gui_to_esd_timer_period = 0.02
 
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
 
-        # Could be good to start the subscribers first so that they update the variables if other nodes are up
-        # self.interfacer_to_gui_subscriber = self.create_subscription(
-        #     MecademicInterfacerToGui, 
-        #     "/mecademic_interfacer_to_gui",
-        #     self.mecademic_interfacer_to_gui_callback,
-        #     10)
+        self.esd_to_gui_subscriber = self.create_subscription(
+            MecademicEsdToGui, 
+            "/mecademic_esd_to_gui",
+            self.esd_to_gui_callback,
+            10)
 
-        # self.utilities_to_gui_subscriber = self.create_subscription(
-        #     MecademicUtilitiesToGui, 
-        #     "/mecademic_utilities_to_gui",
-        #     self.mecademic_utilities_to_gui_callback,
-        #     10)
+        self.joint_state_subscriber = self.create_subscription(
+            JointState, 
+            "/mecademic_joint_state",
+            self.joint_state_callback,
+            10)
 
-        # Then sleep for a bit so that the node gets the updated variables before publishing them
         time.sleep(2)
 
-        self.gui_to_interfacer_publisher_ = self.create_publisher(
-            MecademicGuiToInterfacer,
-            "/mecademic_gui_to_interfacer",
+        self.gui_to_esd_publisher_ = self.create_publisher(
+            MecademicGuiToEsd,
+            "/mecademic_gui_to_esd",
             10)
         
-        self.gui_to_utilities_publisher_ = self.create_publisher(
-            MecademicGuiToUtilities,
-            "/mecademic_gui_to_utilities",
-            10)
+        self.gui_to_esd_timer = self.create_timer(
+            self.gui_to_esd_timer_period, 
+            self.gui_to_esd_callback)
 
-        # Decouple message receiving and forwarding
-        self.gui_to_interfacer_timer = self.create_timer(
-            self.gui_to_interfacer_timer_period, 
-            self.mecademic_gui_to_interfacer_callback)
-
-        self.gui_to_utilities_timer = self.create_timer(
-            self.gui_to_utilities_timer_period, 
-            self.mecademic_gui_to_utilities_callback)
+    def gui_to_esd_callback(self):
+        self.gui_to_esd_msg.gui_control_enabled = CommVariables.gui_control_enabled
         
-    def mecademic_gui_to_interfacer_callback(self):
-        self.gui_to_interfacer.gui_control_enabled = CommVariables.gui_control_enabled
-
         if CommVariables.speed_slider_value >= 0 and CommVariables.speed_slider_value <= 100:
-            self.gui_to_interfacer.gui_speed_control = CommVariables.speed_slider_value
+            self.gui_to_esd_msg.gui_speed_control = CommVariables.speed_slider_value
         else:
             pass
 
-        self.gui_to_interfacer.gui_joint_control[0] = CommVariables.slider_1_value * math.pi / 180
-        self.gui_to_interfacer.gui_joint_control[1] = CommVariables.slider_2_value * math.pi / 180
-        self.gui_to_interfacer.gui_joint_control[2] = CommVariables.slider_3_value * math.pi / 180
-        self.gui_to_interfacer.gui_joint_control[3] = CommVariables.slider_4_value * math.pi / 180
-        self.gui_to_interfacer.gui_joint_control[4] = CommVariables.slider_5_value * math.pi / 180
-        self.gui_to_interfacer.gui_joint_control[5] = CommVariables.slider_6_value * math.pi / 180
-        self.gui_to_interfacer_publisher_.publish(self.gui_to_interfacer)
+        self.gui_to_esd_msg.gui_joint_control[0] = CommVariables.slider_1_value * math.pi / 180
+        self.gui_to_esd_msg.gui_joint_control[1] = CommVariables.slider_2_value * math.pi / 180
+        self.gui_to_esd_msg.gui_joint_control[2] = CommVariables.slider_3_value * math.pi / 180
+        self.gui_to_esd_msg.gui_joint_control[3] = CommVariables.slider_4_value * math.pi / 180
+        self.gui_to_esd_msg.gui_joint_control[4] = CommVariables.slider_5_value * math.pi / 180
+        self.gui_to_esd_msg.gui_joint_control[5] = CommVariables.slider_6_value * math.pi / 180
 
-    def mecademic_gui_to_utilities_callback(self):
-        self.gui_to_utilities.action = "update" # connect this to gui when adding functionality
-        self.gui_to_utilities.pose_name = CommVariables.pose_name
-        self.gui_to_utilities_publisher_.publish(self.gui_to_utilities)
+        self.gui_to_esd_msg.utility_action = "update"
+        self.gui_to_esd_msg.utility_pose_name = CommVariables.pose_name
+        self.gui_to_esd_publisher_.publish(self.gui_to_esd_msg)
 
+    def esd_to_gui_callback(self, data):
+        self.actual_pose = data.actual_pose
+        self.saved_poses = data.saved_poses
+        CommVariables.actual_pose = self.actual_pose
+        CommVariables.saved_poses = self.saved_poses
+
+    def joint_state_callback(self, data):
+        self.actual_joint_pose = data.position
+        CommVariables.actual_joint_pose = self.actual_joint_pose
 
 def main(args=None):
 
