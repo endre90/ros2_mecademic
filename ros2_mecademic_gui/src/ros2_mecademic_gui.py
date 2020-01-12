@@ -1,5 +1,6 @@
 import sys
 import time
+import ast
 import csv
 import os
 import math
@@ -74,6 +75,9 @@ class Window(QWidget, CommVariables):
 
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
+
+        self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
+            'poses', 'joint_poses.csv')
 
         minimum = -180
         maximum = 180
@@ -357,6 +361,7 @@ class Window(QWidget, CommVariables):
 
                 self.speed_box.setEnabled(True)
                 self.pose_saver_box.setEnabled(True)
+                self.combo_box_box.setEnabled(True)
 
             else:
                 CommVariables.gui_control_enabled = False
@@ -377,6 +382,7 @@ class Window(QWidget, CommVariables):
 
                 self.speed_box.setEnabled(False)
                 self.pose_saver_box.setEnabled(False)
+                self.combo_box_box.setEnabled(False)
 
         self.radio_1.toggled.connect(radio_state)
 
@@ -508,6 +514,64 @@ class Window(QWidget, CommVariables):
 
         self.pose_saver_button.clicked.connect(pose_saver_button_clicked)
 
+        # goto pose widget:
+        self.combo_box_box = QGroupBox("go_to_pose")
+        self.combo_box_box_layout = QHBoxLayout()
+        self.combo_box_label = QLabel("pose_name")
+        self.combo_box = QComboBox()
+        self.combo_box.setMinimumWidth(400)
+        self.combo_box_button = QPushButton("go")
+        self.combo_box_button.setMaximumWidth(80)
+        self.combo_box_box_layout.addWidget(self.combo_box_label)
+        self.combo_box_box_layout.addWidget(self.combo_box)
+        self.combo_box_box_layout.addWidget(self.combo_box_button)
+        self.combo_box_box.setLayout(self.combo_box_box_layout)
+        self.combo_box_box.setEnabled(False)
+
+        self.old_saved_poses = CommVariables.saved_poses
+
+        def refresh_combo_box():
+            if self.old_saved_poses != CommVariables.saved_poses:
+                self.combo_box.clear()
+                self.combo_box.addItems(CommVariables.saved_poses)
+                self.old_saved_poses = CommVariables.saved_poses
+            else:
+                pass
+
+        self.timer2 = QTimer()
+        self.timer2.timeout.connect(refresh_combo_box)
+        self.timer2.start(500) # repeat self.update_labelTime every 0.5 sec
+
+        def get_pose_from_pose_name(name):
+            pose = []
+            with open(self.joints_input, 'r') as f_in:
+                csv_reader = csv.reader(f_in, delimiter=':')
+                for row in csv_reader:
+                    if name == row[0]:
+                        pose = ast.literal_eval(row[1])
+                        break
+                    else:
+                        pass
+
+            if pose != []:
+                self.pose_name_error = ''
+                return pose
+            else:
+                self.pose_name_error = 'pose with the name ' + name + ' not saved'
+                return []
+            
+        def combo_box_button_clicked():
+            pose = get_pose_from_pose_name(self.combo_box.currentText())
+            self.slider_1.setValue(180*pose[0]/3.14)
+            self.slider_2.setValue(180*pose[1]/3.14)
+            self.slider_3.setValue(180*pose[2]/3.14)
+            self.slider_4.setValue(180*pose[3]/3.14)
+            self.slider_5.setValue(180*pose[4]/3.14)
+            self.slider_6.setValue(180*pose[5]/3.14)
+            # print(pose)
+
+        self.combo_box_button.clicked.connect(combo_box_button_clicked)
+       
         # populate the grid with widgets:
         for slider_box in self.slider_boxes:
             grid.addWidget(slider_box, self.slider_boxes.index(slider_box), 0)
@@ -526,7 +590,8 @@ class Window(QWidget, CommVariables):
     
         grid.addWidget(self.speed_box, 6, 0, 1, 4)
         grid.addWidget(self.pose_saver_box, 7, 0, 1, 4)
-        grid.addWidget(self.radio_1, 8, 0)
+        grid.addWidget(self.combo_box_box, 8, 0, 1, 4)
+        grid.addWidget(self.radio_1, 9, 0)
 
         self.setLayout(grid)
 
