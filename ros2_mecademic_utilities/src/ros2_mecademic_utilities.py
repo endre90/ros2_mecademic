@@ -6,8 +6,8 @@ import csv
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-from ros2_mecademic_msgs.msg import MecademicUtilsToEsd
-from ros2_mecademic_msgs.msg import MecademicEsdToUtils
+from ros2_mecademic_msgs.msg import MecademicUtilsToGui
+from ros2_mecademic_msgs.msg import MecademicGuiToUtils
 from ament_index_python.packages import get_package_share_directory
 
 class Ros2MecademicUtilities(Node):
@@ -15,15 +15,15 @@ class Ros2MecademicUtilities(Node):
     def __init__(self):
         super().__init__("ros2_mecademic_utilities")
 
-        self.utils_to_esd_msg = MecademicUtilsToEsd()
+        self.utils_to_gui_msg = MecademicUtilsToGui()
         self.joint_state = JointState()
 
-        self.utils_to_esd_timer_period = 0.5
+        self.utils_to_gui_timer_period = 0.5
 
-        self.utils_to_esd_msg.actual_pose = ""
-        self.utils_to_esd_msg.saved_poses = []
-        self.utils_to_esd_msg.echo_utility_action = ""
-        self.utils_to_esd_msg.echo_utility_pose_name = ""
+        # self.utils_to_esd_msg.actual_pose = ""
+        self.utils_to_gui_msg.saved_poses = []
+        # self.utils_to__msg.echo_utility_action = ""
+        # self.utils_to_esd_msg.echo_utility_pose_name = ""
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.prev_action = ""
@@ -45,29 +45,29 @@ class Ros2MecademicUtilities(Node):
             self.joint_callback,
             10)
 
-        self.esd_to_utils_subscriber = self.create_subscription(
-            MecademicEsdToUtils, 
-            "/mecademic_esd_to_utils",
-            self.esd_to_utils_callback,
+        self.gui_to_utils_subscriber = self.create_subscription(
+            MecademicGuiToUtils, 
+            "/mecademic_gui_to_utils",
+            self.gui_to_utils_callback,
             10)
 
         time.sleep(2)
 
-        self.utils_to_esd_publisher_ = self.create_publisher(
-            MecademicUtilsToEsd,
-            "/mecademic_utils_to_esd",
+        self.utils_to_gui_publisher_ = self.create_publisher(
+            MecademicUtilsToGui,
+            "/mecademic_utils_to_gui",
             10)
 
-        self.utils_to_esd_timer = self.create_timer(
-            self.utils_to_esd_timer_period, 
-            self.utils_to_esd_callback)
+        self.utils_to_gui_timer = self.create_timer(
+            self.utils_to_gui_timer_period, 
+            self.utils_to_gui_callback)
 
     def delete_pose(self, input_f, newpose_f, pose_name):
         '''
         Delete one pose from pose lists.
         '''
         
-        with open(input_f, "rb") as f_in, open(newpose_f, "wb") as f_np:
+        with open(input_f, "r") as f_in, open(newpose_f, "w") as f_np:
             csv_input = csv.reader(f_in, delimiter=':')
             for row in csv_input:
                 if row[0] != pose_name:
@@ -85,7 +85,7 @@ class Ros2MecademicUtilities(Node):
         Delete all poses from pose lists.
         '''
         
-        with open(input_f, "rb") as f_in, open(newpose_f, "wb") as f_np:
+        with open(input_f, "r") as f_in, open(newpose_f, "w") as f_np:
             csv_input = csv.reader(f_in, delimiter=':')
             for row in csv_input:
                 if row[0] == 'control_pose':
@@ -132,7 +132,7 @@ class Ros2MecademicUtilities(Node):
         being updated are saved in a oldpose list and those two lists are merged in the update_merge method. 
         '''
 
-        with open(input_f, "rb") as f_in, open(oldpose_f, "wb") as f_op, open(newpose_f, "wb") as f_np:
+        with open(input_f, "r") as f_in, open(oldpose_f, "w") as f_op, open(newpose_f, "w") as f_np:
             csv_input = csv.reader(f_in, delimiter=':')
             for row in csv_input:
                 if row[0] == name:
@@ -200,20 +200,7 @@ class Ros2MecademicUtilities(Node):
         self.act_pos[4] = data.position[4]
         self.act_pos[5] = data.position[5]
 
-    def read_and_generate_pose_list(self, input_f):
-        '''
-        Acquire the names of all saved poses from a file to a list.
-        '''
-
-        pose_list = []
-        with open(input_f, 'r') as f_in:
-            csv_input = csv.reader(f_in, delimiter=':')
-            for row in csv_input:
-                pose_list.append(row[0])
-            return pose_list
-
-
-    def esd_to_utils_callback(self, data):
+    def gui_to_utils_callback(self, data):
         '''
         Evaluate and consume command messages from Sequence Planner
         '''
@@ -243,9 +230,9 @@ class Ros2MecademicUtilities(Node):
         else:
             pass
 
-    def utils_to_esd_callback(self):
-        self.utils_to_esd_msg.saved_poses = self.read_and_generate_pose_list(self.joints_input)
-        self.utils_to_esd_publisher_.publish(self.utils_to_esd_msg)
+    def utils_to_gui_callback(self):
+        self.utils_to_gui_msg.saved_poses = self.read_and_generate_pose_list(self.joints_input)
+        self.utils_to_gui_publisher_.publish(self.utils_to_gui_msg)
 
 def main(args=None):
     rclpy.init(args=args)

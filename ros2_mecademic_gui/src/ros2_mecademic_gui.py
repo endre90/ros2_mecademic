@@ -11,6 +11,8 @@ from std_msgs.msg import String
 from sensor_msgs.msg import JointState
 from ros2_mecademic_msgs.msg import MecademicGuiToEsd
 from ros2_mecademic_msgs.msg import MecademicEsdToGui
+from ros2_mecademic_msgs.msg import MecademicGuiToUtils
+from ros2_mecademic_msgs.msg import MecademicUtilsToGui
 from ament_index_python.packages import get_package_share_directory
 
 from PyQt5.QtWidgets import *
@@ -482,22 +484,28 @@ class Ros2MecademicGui(Node, CommVariables):
         super().__init__("ros2_mecademic_gui")
 
         self.gui_to_esd_msg = MecademicGuiToEsd()
+        self.gui_to_utils_msg = MecademicGuiToUtils()
         self.joint_state = JointState()
 
         self.gui_to_esd_msg.gui_control_enabled = False
         self.gui_to_esd_msg.gui_speed_control = 0
         self.gui_to_esd_msg.gui_joint_control = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.gui_to_esd_msg.utility_action = ""
-        self.gui_to_esd_msg.utility_pose_name = ""
 
         self.actual_pose = ""
         self.actual_joint_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.saved_poses = []
 
         self.gui_to_esd_timer_period = 0.02
+        self.gui_to_utils_timer_period = 0.2
 
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
+
+        self.utils_to_gui_subscriber = self.create_subscription(
+            MecademicUtilsToGui, 
+            "/mecademic_utils_to_gui",
+            self.utils_to_gui_callback,
+            10)
 
         self.esd_to_gui_subscriber = self.create_subscription(
             MecademicEsdToGui, 
@@ -517,10 +525,19 @@ class Ros2MecademicGui(Node, CommVariables):
             MecademicGuiToEsd,
             "/mecademic_gui_to_esd",
             10)
+
+        self.gui_to_utils_publisher_ = self.create_publisher(
+            MecademicGuiToUtils,
+            "/mecademic_gui_to_utils",
+            10)
         
         self.gui_to_esd_timer = self.create_timer(
             self.gui_to_esd_timer_period, 
             self.gui_to_esd_callback)
+
+        self.gui_to_utils_timer = self.create_timer(
+            self.gui_to_utils_timer_period, 
+            self.gui_to_utils_callback)
 
     def gui_to_esd_callback(self):
         self.gui_to_esd_msg.gui_control_enabled = CommVariables.gui_control_enabled
@@ -537,14 +554,19 @@ class Ros2MecademicGui(Node, CommVariables):
         self.gui_to_esd_msg.gui_joint_control[4] = CommVariables.slider_5_value * math.pi / 180
         self.gui_to_esd_msg.gui_joint_control[5] = CommVariables.slider_6_value * math.pi / 180
 
-        self.gui_to_esd_msg.utility_action = "update"
-        self.gui_to_esd_msg.utility_pose_name = CommVariables.pose_name
         self.gui_to_esd_publisher_.publish(self.gui_to_esd_msg)
+
+    def gui_to_utils_callback(self):
+        self.gui_to_utils_msg.utility_action = "update"
+        self.gui_to_utils_msg.utility_pose_name = CommVariables.pose_name
+        self.gui_to_utils_publisher_.publish(self.gui_to_utils_msg)
 
     def esd_to_gui_callback(self, data):
         self.actual_pose = data.actual_pose
-        self.saved_poses = data.saved_poses
         CommVariables.actual_pose = self.actual_pose
+        
+    def utils_to_gui_callback(self, data):
+        self.saved_poses = data.saved_poses
         CommVariables.saved_poses = self.saved_poses
 
     def joint_state_callback(self, data):

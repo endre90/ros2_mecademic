@@ -31,8 +31,10 @@ rosidl_generate_interfaces(ros2_mecademic_msgs
   "msg/MecademicEsdToSP.msg"
   "msg/MecademicGuiToEsd.msg"
   "msg/MecademicEsdToGui.msg"
-  "msg/MecademicUtilsToEsd.msg"
-  "msg/MecademicEsdToUtils.msg"
+  "msg/MecademicGuiToUtils.msg"
+  "msg/MecademicUtilsToGui.msg"
+  "msg/MecademicSPToUtils.msg"
+  "msg/MecademicUtilsToSP.msg"
   DEPENDENCIES builtin_interfaces
 )
 

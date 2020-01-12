@@ -1,4 +1,2 @@
 string reference_pose
 string reference_joint_speed
-string utility_action
-string utility_pose_name
