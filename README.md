@@ -5,9 +5,9 @@ The ROS2 Mecademic robot suite (unofficial).
 ## quickstart
 
 The suite provides three modes:
-1. Emulator: `ros2 launch ros2_mecademic_bringup bringup_emulator.launch.py`
+1. Emulator: `ros2 launch ros2_mecademic_bringup bringup_emulator.launch.py` (TODO)
 2. Simulator: `ros2 launch ros2_mecademic_bringup bringup_simulator.launch.py`
-3. Driver: `ros2 launch ros2_mecademic_bringup bringup_driver.launch.py`
+3. Driver: `ros2 launch ros2_mecademic_bringup bringup_driver.launch.py` (TODO)
 
 ## ros2 distro support
 

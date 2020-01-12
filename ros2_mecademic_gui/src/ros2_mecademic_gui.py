@@ -362,6 +362,7 @@ class Window(QWidget, CommVariables):
                 self.speed_box.setEnabled(True)
                 self.pose_saver_box.setEnabled(True)
                 self.combo_box_box.setEnabled(True)
+                self.current_pose_box.setEnabled(True)
 
             else:
                 CommVariables.gui_control_enabled = False
@@ -383,6 +384,7 @@ class Window(QWidget, CommVariables):
                 self.speed_box.setEnabled(False)
                 self.pose_saver_box.setEnabled(False)
                 self.combo_box_box.setEnabled(False)
+                self.current_pose_box.setEnabled(False)
 
         self.radio_1.toggled.connect(radio_state)
 
@@ -571,6 +573,21 @@ class Window(QWidget, CommVariables):
             # print(pose)
 
         self.combo_box_button.clicked.connect(combo_box_button_clicked)
+
+        # current pose widget:
+        self.current_pose_box = QGroupBox("current_pose")
+        self.current_pose_box_layout = QHBoxLayout()
+        self.current_pose_label = QLabel("")
+        self.current_pose_box_layout.addWidget(self.current_pose_label)
+        self.current_pose_box.setLayout(self.current_pose_box_layout)
+        self.current_pose_box.setEnabled(False)
+
+        def update_current_pose_label():
+            self.current_pose_label.setText(str(CommVariables.actual_pose))
+
+        self.timer3 = QTimer()
+        self.timer3.timeout.connect(update_current_pose_label)
+        self.timer3.start(100) # repeat self.update_labelTime every 0.01 sec
        
         # populate the grid with widgets:
         for slider_box in self.slider_boxes:
@@ -591,7 +608,8 @@ class Window(QWidget, CommVariables):
         grid.addWidget(self.speed_box, 6, 0, 1, 4)
         grid.addWidget(self.pose_saver_box, 7, 0, 1, 4)
         grid.addWidget(self.combo_box_box, 8, 0, 1, 4)
-        grid.addWidget(self.radio_1, 9, 0)
+        grid.addWidget(self.current_pose_box, 9, 0, 1, 1)
+        grid.addWidget(self.radio_1, 9, 1, 3, 4)
 
         self.setLayout(grid)
 
