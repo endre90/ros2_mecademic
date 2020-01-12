@@ -62,12 +62,12 @@ class Ros2MecademicUtilities(Node):
             self.utils_to_gui_timer_period, 
             self.utils_to_gui_callback)
 
-    def delete_pose(self, input_f, newpose_f, pose_name):
+    def delete_pose(self, pose_name):
         '''
         Delete one pose from pose lists.
         '''
         
-        with open(input_f, "r") as f_in, open(newpose_f, "w") as f_np:
+        with open(self.joints_input, "r") as f_in, open(self.joints_newposes, "w") as f_np:
             csv_input = csv.reader(f_in, delimiter=':')
             for row in csv_input:
                 if row[0] != pose_name:
@@ -75,8 +75,8 @@ class Ros2MecademicUtilities(Node):
                 else:
                     pass
         
-        os.remove(input_f)
-        os.rename(newpose_f, input_f)
+        os.remove(self.joints_input)
+        os.rename(self.joints_newposes, self.joints_input)
         self.last_completed_action = 'deleted: ' + str(pose_name)
 
 

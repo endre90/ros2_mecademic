@@ -33,6 +33,7 @@ class CommVariables():
     actual_pose = ""
     actual_joint_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     saved_poses = []
+    utility_action = ""
     def __init__(self, parent=None):
         super(CommVariables, self).__init__()
 
@@ -338,9 +339,13 @@ class Window(QWidget, CommVariables):
         for button in self.buttons:
             button.setEnabled(False)
 
-        self.radio_1 = QRadioButton("GUI control enabled")
+        self.radio_1_box = QGroupBox("gui_control")
+        self.radio_1_box_layout = QHBoxLayout()
+        self.radio_1 = QRadioButton("enabled")
         self.radio_1.setChecked(False)
-
+        self.radio_1_box_layout.addWidget(self.radio_1)
+        self.radio_1_box.setLayout(self.radio_1_box_layout)
+        
         def radio_state():
             if self.radio_1.isChecked() == True:
                 CommVariables.gui_control_enabled = True
@@ -479,9 +484,9 @@ class Window(QWidget, CommVariables):
         self.speed_slider.setMinimum(0)
         self.speed_slider.setMaximum(100)
         self.speed_slider.setSingleStep(step)
-        self.speed_slider.setMinimumWidth(300)
+        self.speed_slider.setMinimumWidth(200)
         self.speed_line = QLineEdit("%")
-        self.speed_line.setMaximumWidth(55)
+        self.speed_line.setMaximumWidth(80)
         self.speed_button = QPushButton("set")
         self.speed_box_layout.addWidget(self.speed_slider)
         self.speed_box_layout.addWidget(self.speed_line)
@@ -504,17 +509,26 @@ class Window(QWidget, CommVariables):
         self.pose_saver_box_layout = QHBoxLayout()
         self.pose_saver_label = QLabel("pose_name")
         self.pose_saver_line = QLineEdit("some_pose_name")
-        self.pose_saver_button = QPushButton("update")
+        self.pose_saver_update_button = QPushButton("update")
+        self.pose_saver_delete_button = QPushButton("delete")
         self.pose_saver_box_layout.addWidget(self.pose_saver_label)
         self.pose_saver_box_layout.addWidget(self.pose_saver_line)
-        self.pose_saver_box_layout.addWidget(self.pose_saver_button)
+        self.pose_saver_box_layout.addWidget(self.pose_saver_update_button)
+        self.pose_saver_box_layout.addWidget(self.pose_saver_delete_button)
         self.pose_saver_box.setLayout(self.pose_saver_box_layout)
         self.pose_saver_box.setEnabled(False)
 
-        def pose_saver_button_clicked():
+        def pose_saver_update_button_clicked():
             CommVariables.pose_name = self.pose_saver_line.text()
+            CommVariables.utility_action = "update"
 
-        self.pose_saver_button.clicked.connect(pose_saver_button_clicked)
+        self.pose_saver_update_button.clicked.connect(pose_saver_update_button_clicked)
+
+        def pose_saver_delete_button_clicked():
+            CommVariables.pose_name = self.pose_saver_line.text()
+            CommVariables.utility_action = "delete"
+
+        self.pose_saver_delete_button.clicked.connect(pose_saver_delete_button_clicked)
 
         # goto pose widget:
         self.combo_box_box = QGroupBox("go_to_pose")
@@ -609,7 +623,7 @@ class Window(QWidget, CommVariables):
         grid.addWidget(self.pose_saver_box, 7, 0, 1, 4)
         grid.addWidget(self.combo_box_box, 8, 0, 1, 4)
         grid.addWidget(self.current_pose_box, 9, 0, 1, 1)
-        grid.addWidget(self.radio_1, 9, 1, 3, 4)
+        grid.addWidget(self.radio_1_box, 9, 1, 1, 3)
 
         self.setLayout(grid)
 
@@ -695,7 +709,7 @@ class Ros2MecademicGui(Node, CommVariables):
         self.gui_to_esd_publisher_.publish(self.gui_to_esd_msg)
 
     def gui_to_utils_callback(self):
-        self.gui_to_utils_msg.utility_action = "update"
+        self.gui_to_utils_msg.utility_action = CommVariables.utility_action
         self.gui_to_utils_msg.utility_pose_name = CommVariables.pose_name
         self.gui_to_utils_publisher_.publish(self.gui_to_utils_msg)
 

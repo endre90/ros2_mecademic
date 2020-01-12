@@ -21,7 +21,7 @@ class Ros2MecademicSimulator(Node):
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.pub_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        self.joint_tolerance = 0
+        self.joint_tolerance = 0.01
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_poses.csv')
@@ -153,19 +153,24 @@ class Ros2MecademicSimulator(Node):
     def joint_state_publisher_callback(self):        
         if self.gui_to_esd_msg.gui_control_enabled == True:
             for i in range(0, 6):
+                # self.corrector = 0
                 if self.gui_to_esd_msg.gui_joint_control != None:
-                    if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.002:
+                    if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001:
+                        # self.corrector = 1
                         if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] - 0.001
-                    elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.002:
+                    elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.001:
+                        # self.corrector = 2
                         if self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] + 0.001
                     else:
-                        self.pub_pos[i] = round(self.act_pos[i] + 0.001, 2)
+                        # if self.corrector == 1:
+                        self.pub_pos[i] = self.gui_to_esd_msg.gui_joint_control[i]
+                        pass
                 else:
                     pass
         else:
