@@ -31,7 +31,7 @@ class CommVariables():
     pose_name = ""
     actual_pose = ""
     actual_joint_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    saved_poses = ""
+    saved_poses = []
     def __init__(self, parent=None):
         super(CommVariables, self).__init__()
 
@@ -131,29 +131,41 @@ class Window(QWidget, CommVariables):
 
 
         # Indicator labels setup:
-        self.label_box_1 = QGroupBox("rad")
-        self.label_box_2 = QGroupBox("rad")
-        self.label_box_3 = QGroupBox("rad")
-        self.label_box_4 = QGroupBox("rad")
-        self.label_box_5 = QGroupBox("rad")
-        self.label_box_6 = QGroupBox("rad")
+        self.label_box_1 = QGroupBox("ref_rad")
+        self.label_box_2 = QGroupBox("ref_rad")
+        self.label_box_3 = QGroupBox("ref_rad")
+        self.label_box_4 = QGroupBox("ref_rad")
+        self.label_box_5 = QGroupBox("ref_rad")
+        self.label_box_6 = QGroupBox("ref_rad")
 
         # Indicator labels setup:
-        self.label_box_12 = QGroupBox("deg")
-        self.label_box_22 = QGroupBox("deg")
-        self.label_box_32 = QGroupBox("deg")
-        self.label_box_42 = QGroupBox("deg")
-        self.label_box_52 = QGroupBox("deg")
-        self.label_box_62 = QGroupBox("deg")
+        self.label_box_12 = QGroupBox("ref_deg")
+        self.label_box_22 = QGroupBox("ref_deg")
+        self.label_box_32 = QGroupBox("ref_deg")
+        self.label_box_42 = QGroupBox("ref_deg")
+        self.label_box_52 = QGroupBox("ref_deg")
+        self.label_box_62 = QGroupBox("ref_deg")
+
+         # Indicator labels setup:
+        self.label_box_13 = QGroupBox("act_rad")
+        self.label_box_23 = QGroupBox("act_rad")
+        self.label_box_33 = QGroupBox("act_rad")
+        self.label_box_43 = QGroupBox("act_rad")
+        self.label_box_53 = QGroupBox("act_rad")
+        self.label_box_63 = QGroupBox("act_rad")
 
         self.label_boxes = [self.label_box_1, self.label_box_2, self.label_box_3, self.label_box_4, self.label_box_5, self.label_box_6]
         self.label_boxes2 = [self.label_box_12, self.label_box_22, self.label_box_32, self.label_box_42, self.label_box_52, self.label_box_62]
+        self.label_boxes3 = [self.label_box_13, self.label_box_23, self.label_box_33, self.label_box_43, self.label_box_53, self.label_box_63]
 
         for label_box in self.label_boxes:
             label_box.setMaximumWidth(60)
 
         for label_box in self.label_boxes2:
             label_box.setMaximumWidth(60)
+
+        for label_box in self.label_boxes3:
+            label_box.setMaximumWidth(80)
 
         self.label_1 = QLabel("value")
         self.label_2 = QLabel("value")
@@ -169,8 +181,16 @@ class Window(QWidget, CommVariables):
         self.label_52 = QLabel("value")
         self.label_62 = QLabel("value")
 
+        self.label_13 = QLabel("value")
+        self.label_23 = QLabel("value")
+        self.label_33 = QLabel("value")
+        self.label_43 = QLabel("value")
+        self.label_53 = QLabel("value")
+        self.label_63 = QLabel("value")
+
         self.labels = [self.label_1, self.label_2, self.label_3, self.label_4, self.label_5, self.label_6]
         self.labels2 = [self.label_12, self.label_22, self.label_32, self.label_42, self.label_52, self.label_62]
+        self.labels3 = [self.label_13, self.label_23, self.label_33, self.label_43, self.label_53, self.label_63]
 
         self.label_box_1_layout = QVBoxLayout()
         self.label_box_2_layout = QVBoxLayout()
@@ -186,6 +206,13 @@ class Window(QWidget, CommVariables):
         self.label_box_52_layout = QVBoxLayout()
         self.label_box_62_layout = QVBoxLayout()
 
+        self.label_box_13_layout = QVBoxLayout()
+        self.label_box_23_layout = QVBoxLayout()
+        self.label_box_33_layout = QVBoxLayout()
+        self.label_box_43_layout = QVBoxLayout()
+        self.label_box_53_layout = QVBoxLayout()
+        self.label_box_63_layout = QVBoxLayout()
+
         self.label_box_1_layout.addWidget(self.label_1)
         self.label_box_2_layout.addWidget(self.label_2)
         self.label_box_3_layout.addWidget(self.label_3)
@@ -199,6 +226,13 @@ class Window(QWidget, CommVariables):
         self.label_box_42_layout.addWidget(self.label_42)
         self.label_box_52_layout.addWidget(self.label_52)
         self.label_box_62_layout.addWidget(self.label_62)
+
+        self.label_box_13_layout.addWidget(self.label_13)
+        self.label_box_23_layout.addWidget(self.label_23)
+        self.label_box_33_layout.addWidget(self.label_33)
+        self.label_box_43_layout.addWidget(self.label_43)
+        self.label_box_53_layout.addWidget(self.label_53)
+        self.label_box_63_layout.addWidget(self.label_63)
 
         self.label_box_1.setLayout(self.label_box_1_layout)
         self.label_box_2.setLayout(self.label_box_2_layout)
@@ -214,14 +248,20 @@ class Window(QWidget, CommVariables):
         self.label_box_52.setLayout(self.label_box_52_layout)
         self.label_box_62.setLayout(self.label_box_62_layout)
 
+        self.label_box_13.setLayout(self.label_box_13_layout)
+        self.label_box_23.setLayout(self.label_box_23_layout)
+        self.label_box_33.setLayout(self.label_box_33_layout)
+        self.label_box_43.setLayout(self.label_box_43_layout)
+        self.label_box_53.setLayout(self.label_box_53_layout)
+        self.label_box_63.setLayout(self.label_box_63_layout)
 
         # Ref pos commander setup
-        self.line_box_1 = QGroupBox("ref_deg")
-        self.line_box_2 = QGroupBox("ref_deg")
-        self.line_box_3 = QGroupBox("ref_deg")
-        self.line_box_4 = QGroupBox("ref_deg")
-        self.line_box_5 = QGroupBox("ref_deg")
-        self.line_box_6 = QGroupBox("ref_deg")
+        self.line_box_1 = QGroupBox("set_ref_deg")
+        self.line_box_2 = QGroupBox("set_ref_deg")
+        self.line_box_3 = QGroupBox("set_ref_deg")
+        self.line_box_4 = QGroupBox("set_ref_deg")
+        self.line_box_5 = QGroupBox("set_ref_deg")
+        self.line_box_6 = QGroupBox("set_ref_deg")
 
         self.line_boxes = [self.line_box_1, self.line_box_2, self.line_box_3, self.line_box_4, self.line_box_5, self.line_box_6]
 
@@ -403,12 +443,24 @@ class Window(QWidget, CommVariables):
         self.button_5.clicked.connect(button_5_clicked)
         self.button_6.clicked.connect(button_6_clicked)
 
-        # self.slider_1_value = self.slider_1.value()
+        self.slider_1_value = self.slider_1.value()
         self.slider_2_value = self.slider_2.value()
         self.slider_3_value = self.slider_3.value()
         self.slider_4_value = self.slider_4.value()
         self.slider_5_value = self.slider_5.value()
         self.slider_6_value = self.slider_6.value()
+
+        def update_labels():
+            self.label_13.setText(str(self.actual_joint_pose[0]))
+            self.label_23.setText(str(self.actual_joint_pose[1]))
+            self.label_33.setText(str(self.actual_joint_pose[2]))
+            self.label_43.setText(str(self.actual_joint_pose[3]))
+            self.label_53.setText(str(self.actual_joint_pose[4]))
+            self.label_63.setText(str(self.actual_joint_pose[5]))
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(update_labels)
+        self.timer.start(100) # repeat self.update_labelTime every 0.01 sec
 
         # speedwidget:
         self.speed_box = QGroupBox("robot_speed")
@@ -460,14 +512,17 @@ class Window(QWidget, CommVariables):
         for slider_box in self.slider_boxes:
             grid.addWidget(slider_box, self.slider_boxes.index(slider_box), 0)
         
-        for label_box in self.label_boxes:
-            grid.addWidget(label_box, self.label_boxes.index(label_box), 1)
-
         for label_box in self.label_boxes2:
-            grid.addWidget(label_box, self.label_boxes2.index(label_box), 2)
+            grid.addWidget(label_box, self.label_boxes2.index(label_box), 1)
+
+        for label_box in self.label_boxes:
+            grid.addWidget(label_box, self.label_boxes.index(label_box), 2)
+
+        for label_box in self.label_boxes3:
+            grid.addWidget(label_box, self.label_boxes3.index(label_box), 3)
 
         for line_box in self.line_boxes:
-            grid.addWidget(line_box, self.line_boxes.index(line_box), 3)
+            grid.addWidget(line_box, self.line_boxes.index(line_box), 4)
     
         grid.addWidget(self.speed_box, 6, 0, 1, 4)
         grid.addWidget(self.pose_saver_box, 7, 0, 1, 4)
@@ -515,7 +570,7 @@ class Ros2MecademicGui(Node, CommVariables):
 
         self.joint_state_subscriber = self.create_subscription(
             JointState, 
-            "/mecademic_joint_state",
+            "/mecademic_joint_states",
             self.joint_state_callback,
             10)
 

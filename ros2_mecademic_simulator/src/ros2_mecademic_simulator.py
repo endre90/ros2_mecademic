@@ -66,7 +66,7 @@ class Ros2MecademicSimulator(Node):
         self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
             "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
 
-        self.joint_state_timer_period = 0.005
+        self.joint_state_timer_period = 0.01
 
         self.joint_state_publisher_ = self.create_publisher(
             JointState,
@@ -154,20 +154,18 @@ class Ros2MecademicSimulator(Node):
         if self.gui_to_esd_msg.gui_control_enabled == True:
             for i in range(0, 6):
                 if self.gui_to_esd_msg.gui_joint_control != None:
-                    if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
-                        # self.pub_pos[i] = self.act_pos[i] - 0.001
-                        if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control:
+                    if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.002:
+                        if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
                         else:
-                            self.pub_pos[i] = round(self.act_pos[i] - 0.001, 3)
-                    elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.01:
-                        if self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control:
+                            self.pub_pos[i] = self.act_pos[i] - 0.001
+                    elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.002:
+                        if self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
                         else:
-                            self.pub_pos[i] = round(self.act_pos[i] + 0.001, 3)
-                        # self.pub_pos[i] = self.act_pos[i] + 0.001
+                            self.pub_pos[i] = self.act_pos[i] + 0.001
                     else:
-                        pass
+                        self.pub_pos[i] = round(self.act_pos[i] + 0.001, 2)
                 else:
                     pass
         else:
