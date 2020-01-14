@@ -23,6 +23,7 @@ class Ros2MecademicSimulator(Node):
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.pub_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.sync_speed_scale = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         self.joint_reference_pose = None
         self.joint_tolerance = 0.01
 
@@ -182,16 +183,30 @@ class Ros2MecademicSimulator(Node):
 
     def joint_state_publisher_callback(self):        
         if self.gui_to_esd_msg.gui_control_enabled == True:
+            
+            for i in range(0, 6):
+                self.sync_speed_scale[i] = abs(self.gui_to_esd_msg.gui_joint_control[i] - self.act_pos[i])
+                
+            self.sync_max = max(self.sync_speed_scale)
+            if self.sync_max != 0:
+                self.sync_max_factor = 1 / self.sync_max
+            else:
+                self.sync_max_factor = 1
+
+            for i in range(0, 6):
+                self.sync_speed_scale[i] = self.sync_speed_scale[i]*self.sync_max_factor
+               
             for i in range(0, 6):
                 if self.gui_to_esd_msg.gui_joint_control != None:
+                    print(self.sync_speed_scale)
                     if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001:
                         if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
-                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
+                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] - 0.001
                     elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.001:
                         if self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.01:
-                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
+                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] + 0.001
                     else:

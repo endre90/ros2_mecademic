@@ -8,6 +8,8 @@ from std_msgs.msg import String
 from sensor_msgs.msg import JointState
 from ros2_mecademic_msgs.msg import MecademicUtilsToGui
 from ros2_mecademic_msgs.msg import MecademicGuiToUtils
+from ros2_mecademic_msgs.msg import MecademicSPToUtils
+from ros2_mecademic_msgs.msg import MecademicUtilsToSP
 from ament_index_python.packages import get_package_share_directory
 
 class Ros2MecademicUtilities(Node):
@@ -80,12 +82,12 @@ class Ros2MecademicUtilities(Node):
         self.last_completed_action = 'deleted: ' + str(pose_name)
 
 
-    def clear_pose_list(self, input_f, newpose_f):
+    def clear_pose_list(self):
         '''
         Delete all poses from pose lists.
         '''
         
-        with open(input_f, "r") as f_in, open(newpose_f, "w") as f_np:
+        with open(self.joints_input, "r") as f_in, open(self.joints_newposes, "w") as f_np:
             csv_input = csv.reader(f_in, delimiter=':')
             for row in csv_input:
                 if row[0] == 'control_pose':
