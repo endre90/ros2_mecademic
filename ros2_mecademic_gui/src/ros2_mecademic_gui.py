@@ -29,6 +29,14 @@ class CommVariables():
     slider_4_value = 0
     slider_5_value = 0
     slider_6_value = 0
+
+    ref_1_value = 0.0
+    ref_2_value = 0.0
+    ref_3_value = 0.0
+    ref_4_value = 0.0
+    ref_5_value = 0.0
+    ref_6_value = 0.0
+
     pose_name = ""
     actual_pose = ""
     actual_joint_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -37,38 +45,48 @@ class CommVariables():
     def __init__(self, parent=None):
         super(CommVariables, self).__init__()
 
-# class QDoubleSlider(QSlider):
+class QDoubleSlider(QSlider):
 
-#     # create our our signal that we can connect to if necessary
-#     doubleValueChanged = pyqtSignal(float)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.decimals = 5
+        self._max_int = 10 ** self.decimals
 
-#     def __init__(self, decimals = 5, *args, **kargs):
-#         super(QDoubleSlider, self).__init__( *args, **kargs)
-#         self._multi = 10 ** decimals
+        super().setMinimum(0)
+        super().setMaximum(self._max_int)
 
-#         self.valueChanged.connect(self.emitDoubleValueChanged)
+        self._min_value = 0.0
+        self._max_value = 1.0
 
-#     def emitDoubleValueChanged(self):
-#         value = float(super(QDoubleSlider, self).value())/self._multi
-#         self.doubleValueChanged.emit(value)
+    @property
+    def _value_range(self):
+        return self._max_value - self._min_value
 
-#     def value(self):
-#         return float(super(QDoubleSlider, self).value()) / self._multi
+    def value(self):
+        return float(super().value()) / self._max_int * self._value_range + self._min_value
 
-#     def setMinimum(self, value):
-#         return super(QDoubleSlider, self).setMinimum(value * self._multi)
+    def setValue(self, value):
+        super().setValue(int((value - self._min_value) / self._value_range * self._max_int))
 
-#     def setMaximum(self, value):
-#         return super(QDoubleSlider, self).setMaximum(value * self._multi)
+    def setMinimum(self, value):
+        if value > self._max_value:
+            raise ValueError("Minimum limit cannot be higher than maximum")
 
-#     def setSingleStep(self, value):
-#         return super(QDoubleSlider, self).setSingleStep(value * self._multi)
+        self._min_value = value
+        self.setValue(self.value())
 
-#     def singleStep(self):
-#         return float(super(QDoubleSlider, self).singleStep()) / self._multi
+    def setMaximum(self, value):
+        if value < self._min_value:
+            raise ValueError("Minimum limit cannot be higher than maximum")
 
-#     def setValue(self, value):
-#         super(QDoubleSlider, self).setValue(int(value * self._multi))
+        self._max_value = value
+        self.setValue(self.value())
+
+    def minimum(self):
+        return self._min_value
+
+    def maximum(self):
+        return self._max_value
 
 class Window(QWidget, CommVariables):
     def __init__(self, parent=None):
@@ -82,7 +100,7 @@ class Window(QWidget, CommVariables):
 
         minimum = -180
         maximum = 180
-        step = 0.0001
+        step = 1
 
         grid = QGridLayout()
 
@@ -96,12 +114,12 @@ class Window(QWidget, CommVariables):
 
         self.slider_boxes = [self.slider_box_1, self.slider_box_2, self.slider_box_3, self.slider_box_4, self.slider_box_5, self.slider_box_6]
 
-        self.slider_1 = QSlider(Qt.Horizontal)
-        self.slider_2 = QSlider(Qt.Horizontal)
-        self.slider_3 = QSlider(Qt.Horizontal)
-        self.slider_4 = QSlider(Qt.Horizontal)
-        self.slider_5 = QSlider(Qt.Horizontal)
-        self.slider_6 = QSlider(Qt.Horizontal)
+        self.slider_1 = QDoubleSlider(Qt.Horizontal)
+        self.slider_2 = QDoubleSlider(Qt.Horizontal)
+        self.slider_3 = QDoubleSlider(Qt.Horizontal)
+        self.slider_4 = QDoubleSlider(Qt.Horizontal)
+        self.slider_5 = QDoubleSlider(Qt.Horizontal)
+        self.slider_6 = QDoubleSlider(Qt.Horizontal)
 
         self.sliders = [self.slider_1, self.slider_2, self.slider_3, self.slider_4, self.slider_5, self.slider_6]
         
@@ -115,6 +133,7 @@ class Window(QWidget, CommVariables):
         for slider in self.sliders:
             slider.setFocusPolicy(Qt.StrongFocus)
             slider.setTickPosition(QSlider.TicksBothSides)
+            slider.setTickInterval(5000)
             slider.setMinimum(minimum)
             slider.setMaximum(maximum)
             slider.setSingleStep(step)
@@ -164,13 +183,16 @@ class Window(QWidget, CommVariables):
         self.label_boxes3 = [self.label_box_13, self.label_box_23, self.label_box_33, self.label_box_43, self.label_box_53, self.label_box_63]
 
         for label_box in self.label_boxes:
-            label_box.setMaximumWidth(60)
+            label_box.setMinimumWidth(90)
+            label_box.setMaximumWidth(90)
 
         for label_box in self.label_boxes2:
-            label_box.setMaximumWidth(60)
+            label_box.setMinimumWidth(90)
+            label_box.setMaximumWidth(90)
 
         for label_box in self.label_boxes3:
-            label_box.setMaximumWidth(80)
+            label_box.setMinimumWidth(90)
+            label_box.setMaximumWidth(90)
 
         self.label_1 = QLabel("value")
         self.label_2 = QLabel("value")
@@ -394,32 +416,32 @@ class Window(QWidget, CommVariables):
         self.radio_1.toggled.connect(radio_state)
 
         def slider_1_change():
-            self.label_1.setText('{0:0.2f}'.format(self.slider_1.value() * math.pi / 180))
+            self.label_1.setText('{}'.format(round(self.slider_1.value() * math.pi / 180, 5)))
             self.label_12.setNum(self.slider_1.value())
             CommVariables.slider_1_value = self.slider_1.value()
         
         def slider_2_change():
-            self.label_2.setText('{0:0.2f}'.format(self.slider_2.value() * math.pi / 180))
+            self.label_2.setText('{}'.format(round(self.slider_2.value() * math.pi / 180, 5)))
             self.label_22.setNum(self.slider_2.value())
             CommVariables.slider_2_value = self.slider_2.value()
         
         def slider_3_change():
-            self.label_3.setText('{0:0.2f}'.format(self.slider_3.value() * math.pi / 180))
+            self.label_3.setText('{}'.format(round(self.slider_3.value() * math.pi / 180, 5)))
             self.label_32.setNum(self.slider_3.value())
             CommVariables.slider_3_value = self.slider_3.value()
         
         def slider_4_change():
-            self.label_4.setText('{0:0.2f}'.format(self.slider_4.value() * math.pi / 180))
+            self.label_4.setText('{}'.format(round(self.slider_4.value() * math.pi / 180, 5)))
             self.label_42.setNum(self.slider_4.value())
             CommVariables.slider_4_value = self.slider_4.value()
         
         def slider_5_change():
-            self.label_5.setText('{0:0.2f}'.format(self.slider_5.value() * math.pi / 180))
+            self.label_5.setText('{}'.format(round(self.slider_5.value() * math.pi / 180, 5)))
             self.label_52.setNum(self.slider_5.value())
             CommVariables.slider_5_value = self.slider_5.value()
         
         def slider_6_change():
-            self.label_6.setText('{0:0.2f}'.format(self.slider_6.value() * math.pi / 180))
+            self.label_6.setText('{}'.format(round(self.slider_6.value() * math.pi / 180, 5)))
             self.label_62.setNum(self.slider_6.value())
             CommVariables.slider_6_value = self.slider_6.value()
 
@@ -431,8 +453,10 @@ class Window(QWidget, CommVariables):
         self.slider_5.valueChanged.connect(slider_5_change)
         self.slider_6.valueChanged.connect(slider_6_change)
 
+        CommVariables.ref_1_value = self.label_12.text()
+
         def button_1_clicked():
-            self.slider_1.setValue(int(self.line_1.text()))
+            self.slider_1.setValue(float(self.line_1.text()))
         
         def button_2_clicked():
             self.slider_2.setValue(int(self.line_2.text()))
@@ -464,12 +488,12 @@ class Window(QWidget, CommVariables):
         self.slider_6_value = self.slider_6.value()
 
         def update_labels():
-            self.label_13.setText(str(self.actual_joint_pose[0]))
-            self.label_23.setText(str(self.actual_joint_pose[1]))
-            self.label_33.setText(str(self.actual_joint_pose[2]))
-            self.label_43.setText(str(self.actual_joint_pose[3]))
-            self.label_53.setText(str(self.actual_joint_pose[4]))
-            self.label_63.setText(str(self.actual_joint_pose[5]))
+            self.label_13.setText(str(round(self.actual_joint_pose[0], 5)))
+            self.label_23.setText(str(round(self.actual_joint_pose[1], 5)))
+            self.label_33.setText(str(round(self.actual_joint_pose[2], 5)))
+            self.label_43.setText(str(round(self.actual_joint_pose[3], 5)))
+            self.label_53.setText(str(round(self.actual_joint_pose[4], 5)))
+            self.label_63.setText(str(round(self.actual_joint_pose[5], 5)))
 
         self.timer = QTimer()
         self.timer.timeout.connect(update_labels)
@@ -481,6 +505,7 @@ class Window(QWidget, CommVariables):
         self.speed_slider = QSlider(Qt.Horizontal)
         self.speed_slider.setFocusPolicy(Qt.StrongFocus)
         self.speed_slider.setTickPosition(QSlider.TicksBothSides)
+        self.speed_slider.setTickInterval(10)
         self.speed_slider.setMinimum(0)
         self.speed_slider.setMaximum(100)
         self.speed_slider.setSingleStep(step)
@@ -578,12 +603,12 @@ class Window(QWidget, CommVariables):
             
         def combo_box_button_clicked():
             pose = get_pose_from_pose_name(self.combo_box.currentText())
-            self.slider_1.setValue(180*pose[0]/3.14)
-            self.slider_2.setValue(180*pose[1]/3.14)
-            self.slider_3.setValue(180*pose[2]/3.14)
-            self.slider_4.setValue(180*pose[3]/3.14)
-            self.slider_5.setValue(180*pose[4]/3.14)
-            self.slider_6.setValue(180*pose[5]/3.14)
+            self.slider_1.setValue(180*pose[0]/math.pi)
+            self.slider_2.setValue(180*pose[1]/math.pi)
+            self.slider_3.setValue(180*pose[2]/math.pi)
+            self.slider_4.setValue(180*pose[3]/math.pi)
+            self.slider_5.setValue(180*pose[4]/math.pi)
+            self.slider_6.setValue(180*pose[5]/math.pi)
             # print(pose)
 
         self.combo_box_button.clicked.connect(combo_box_button_clicked)
@@ -601,7 +626,24 @@ class Window(QWidget, CommVariables):
 
         self.timer3 = QTimer()
         self.timer3.timeout.connect(update_current_pose_label)
-        self.timer3.start(100) # repeat self.update_labelTime every 0.01 sec
+        self.timer3.start(100) # repeat self.update_labelTime every 0.1 sec
+
+        # update sliders:
+        def update_sliders():
+            if CommVariables.gui_control_enabled == False:
+                self.slider_1.setValue(180*CommVariables.actual_joint_pose[0]/math.pi)
+                self.slider_2.setValue(180*CommVariables.actual_joint_pose[1]/math.pi)
+                self.slider_3.setValue(180*CommVariables.actual_joint_pose[2]/math.pi)
+                self.slider_4.setValue(180*CommVariables.actual_joint_pose[3]/math.pi)
+                self.slider_5.setValue(180*CommVariables.actual_joint_pose[4]/math.pi)
+                self.slider_6.setValue(180*CommVariables.actual_joint_pose[5]/math.pi)
+            else:
+                pass
+        
+        self.timer4 = QTimer()
+        self.timer4.timeout.connect(update_sliders)
+        self.timer4.start(10) # repeat self.update_labelTime every 0.1 sec
+
        
         # populate the grid with widgets:
         for slider_box in self.slider_boxes:

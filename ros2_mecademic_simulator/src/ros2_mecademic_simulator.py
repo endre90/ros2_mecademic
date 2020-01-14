@@ -12,6 +12,8 @@ from ros2_mecademic_msgs.msg import MecademicGuiToEsd
 from ros2_mecademic_msgs.msg import MecademicEsdToGui
 from ros2_mecademic_msgs.msg import MecademicSPToEsd
 from ros2_mecademic_msgs.msg import MecademicEsdToSP
+from ros2_mecademic_msgs.msg import MecademicSPToEsd
+from ros2_mecademic_msgs.msg import MecademicEsdToSP
 from ament_index_python.packages import get_package_share_directory
 
 class Ros2MecademicSimulator(Node):
@@ -21,6 +23,7 @@ class Ros2MecademicSimulator(Node):
 
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.pub_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.joint_reference_pose = None
         self.joint_tolerance = 0.01
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
@@ -43,6 +46,17 @@ class Ros2MecademicSimulator(Node):
             JointState, 
             "/mecademic_joint_states",
             self.joint_state_callback,
+            10)
+
+        # sp to esd:
+        self.sp_to_esd_msg = MecademicSPToEsd()
+        self.sp_to_esd_msg.reference_pose = ""
+        self.sp_to_esd_msg.reference_joint_speed = 0
+
+        self.sp_to_esd_subscriber = self.create_subscription(
+            MecademicSPToEsd, 
+            "/mecademic_sp_to_esd",
+            self.sp_to_esd_callback,
             10)
 
         time.sleep(2)
@@ -76,6 +90,23 @@ class Ros2MecademicSimulator(Node):
         self.joint_state_publisher_timer = self.create_timer(
             self.joint_state_timer_period, 
             self.joint_state_publisher_callback)
+
+        # esd to sp:
+        self.esd_to_sp_msg = MecademicEsdToSP()
+        self.esd_to_sp_msg.actual_pose = ""
+        self.esd_to_sp_msg.actual_joint_speed = 0
+        self.esd_to_sp_msg.echo_reference_pose = ""
+        self.esd_to_sp_msg.echo_reference_joint_speed = 0
+        self.esd_to_sp_timer_period = 0.1
+
+        self.esd_to_sp_publisher_ = self.create_publisher(
+            MecademicEsdToSP,
+            "/mecademic_esd_to_sp",
+            10)
+
+        self.esd_to_sp_publisher_timer = self.create_timer(
+            self.esd_to_sp_timer_period, 
+            self.esd_to_sp_callback)
 
     def get_pose_from_pose_name(self, name):
         '''
@@ -134,47 +165,57 @@ class Ros2MecademicSimulator(Node):
         self.act_pos[4] = data.position[4]
         self.act_pos[5] = data.position[5]
 
-    # def sp_callback(self, data):
-    #     self.ref_pos = self.find_pose(data.data, self.joints_input)
-    #     print(self.ref_pos)
+    def sp_to_esd_callback(self, data):
+        self.sp_to_esd_msg.reference_pose = data.reference_pose
+        self.sp_to_esd_msg.reference_joint_speed = data.reference_joint_speed
+        self.joint_reference_pose = self.get_pose_from_pose_name(self.sp_to_esd_msg.reference_pose)
 
     def gui_to_esd_callback(self, data):
         self.gui_to_esd_msg.gui_control_enabled = data.gui_control_enabled
         self.gui_to_esd_msg.gui_speed_control = data.gui_speed_control
-        self.gui_to_esd_msg.gui_joint_control[0] = round(data.gui_joint_control[0], 2)
-        self.gui_to_esd_msg.gui_joint_control[1] = round(data.gui_joint_control[1], 2)
-        self.gui_to_esd_msg.gui_joint_control[2] = round(data.gui_joint_control[2], 2)
-        self.gui_to_esd_msg.gui_joint_control[3] = round(data.gui_joint_control[3], 2)
-        self.gui_to_esd_msg.gui_joint_control[4] = round(data.gui_joint_control[4], 2)
-        self.gui_to_esd_msg.gui_joint_control[5] = round(data.gui_joint_control[5], 2)
-        # self.gui_to_esd_msg.utility_action = data.utility_action
-        # self.gui_to_esd_msg.utility_pose_name = data.utility_pose_name
+        self.gui_to_esd_msg.gui_joint_control[0] = round(data.gui_joint_control[0], 3)
+        self.gui_to_esd_msg.gui_joint_control[1] = round(data.gui_joint_control[1], 3)
+        self.gui_to_esd_msg.gui_joint_control[2] = round(data.gui_joint_control[2], 3)
+        self.gui_to_esd_msg.gui_joint_control[3] = round(data.gui_joint_control[3], 3)
+        self.gui_to_esd_msg.gui_joint_control[4] = round(data.gui_joint_control[4], 3)
+        self.gui_to_esd_msg.gui_joint_control[5] = round(data.gui_joint_control[5], 3)
 
     def joint_state_publisher_callback(self):        
         if self.gui_to_esd_msg.gui_control_enabled == True:
             for i in range(0, 6):
-                # self.corrector = 0
                 if self.gui_to_esd_msg.gui_joint_control != None:
                     if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001:
-                        # self.corrector = 1
                         if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] - 0.001
                     elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.001:
-                        # self.corrector = 2
                         if self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control, 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] + 0.001
                     else:
-                        # if self.corrector == 1:
                         self.pub_pos[i] = self.gui_to_esd_msg.gui_joint_control[i]
                         pass
                 else:
                     pass
         else:
-            pass
+            if self.joint_reference_pose != None:
+                for i in range(0, 6):
+                    if self.joint_reference_pose[i] < self.act_pos[i] - 0.001:
+                        if self.joint_reference_pose[i] < self.act_pos[i] - 0.01:
+                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.sp_to_esd_msg.reference_joint_speed, 4)
+                        else:
+                            self.pub_pos[i] = self.act_pos[i] - 0.001
+                    elif self.joint_reference_pose[i] > self.act_pos[i] + 0.001:
+                        if self.joint_reference_pose[i] > self.act_pos[i] + 0.01:
+                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.sp_to_esd_msg.reference_joint_speed, 4)
+                        else:
+                            self.pub_pos[i] = self.act_pos[i] + 0.001
+                    else:
+                        self.pub_pos[i] = self.joint_reference_pose[i]
+            else:
+                pass
 
         self.joint_state.name = self.joint_names
         self.joint_state.position = self.pub_pos
@@ -183,6 +224,13 @@ class Ros2MecademicSimulator(Node):
     def esd_to_gui_publisher_callback(self):
         self.esd_to_gui_msg.actual_pose = self.get_pose_name_from_pose()
         self.esd_to_gui_publisher_.publish(self.esd_to_gui_msg)
+
+    def esd_to_sp_callback(self):
+        self.esd_to_sp_msg.actual_pose = self.esd_to_gui_msg.actual_pose
+        self.esd_to_sp_msg.actual_joint_speed = self.sp_to_esd_msg.reference_joint_speed
+        self.esd_to_sp_msg.echo_reference_pose = self.sp_to_esd_msg.reference_pose
+        self.esd_to_sp_msg.echo_reference_joint_speed = self.sp_to_esd_msg.reference_joint_speed
+        self.esd_to_sp_publisher_.publish(self.esd_to_sp_msg)
     
 def main(args=None):
 

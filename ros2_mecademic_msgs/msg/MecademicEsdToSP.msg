@@ -1,4 +1,4 @@
 string actual_pose
-string actual_joint_speed
+uint8 actual_joint_speed
 string echo_reference_pose
-string echo_reference_joint_speed
+uint8 echo_reference_joint_speed
