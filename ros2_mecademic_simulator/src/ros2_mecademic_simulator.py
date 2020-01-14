@@ -24,6 +24,7 @@ class Ros2MecademicSimulator(Node):
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.pub_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.sync_speed_scale = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        self.max_speed_factor = 2 # do not exceed 2, for now... Reduce if necessary.
         self.joint_reference_pose = None
         self.joint_tolerance = 0.01
 
@@ -199,16 +200,16 @@ class Ros2MecademicSimulator(Node):
             for i in range(0, 6):
                 if self.gui_to_esd_msg.gui_joint_control != None:
                     print(self.sync_speed_scale)
-                    if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001:
+                    if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001*self.max_speed_factor:
                         if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
-                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
+                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.max_speed_factor*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
                         else:
-                            self.pub_pos[i] = self.act_pos[i] - 0.001
-                    elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.001:
+                            self.pub_pos[i] = self.act_pos[i] - 0.001*self.max_speed_factor
+                    elif self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.001*self.max_speed_factor:
                         if self.gui_to_esd_msg.gui_joint_control[i] > self.act_pos[i] + 0.01:
-                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
+                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.max_speed_factor*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
                         else:
-                            self.pub_pos[i] = self.act_pos[i] + 0.001
+                            self.pub_pos[i] = self.act_pos[i] + 0.001*self.max_speed_factor
                     else:
                         self.pub_pos[i] = self.gui_to_esd_msg.gui_joint_control[i]
                         pass
@@ -221,12 +222,12 @@ class Ros2MecademicSimulator(Node):
                         if self.joint_reference_pose[i] < self.act_pos[i] - 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.sp_to_esd_msg.reference_joint_speed, 4)
                         else:
-                            self.pub_pos[i] = self.act_pos[i] - 0.001
+                            self.pub_pos[i] = self.act_pos[i] - 0.001*self.max_speed_factor
                     elif self.joint_reference_pose[i] > self.act_pos[i] + 0.001:
                         if self.joint_reference_pose[i] > self.act_pos[i] + 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.sp_to_esd_msg.reference_joint_speed, 4)
                         else:
-                            self.pub_pos[i] = self.act_pos[i] + 0.001
+                            self.pub_pos[i] = self.act_pos[i] + 0.001*self.max_speed_factor
                     else:
                         self.pub_pos[i] = self.joint_reference_pose[i]
             else:
