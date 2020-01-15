@@ -17,6 +17,13 @@ class Ros2MecademicUtilities(Node):
     def __init__(self):
         super().__init__("ros2_mecademic_utilities")
 
+        self.namespace = ""
+
+        if len(sys.argv) != 2:
+            self.namespace = sys.argv[1]
+        else:
+            pass
+
         self.utils_to_gui_msg = MecademicUtilsToGui()
         self.joint_state = JointState()
 
@@ -31,8 +38,20 @@ class Ros2MecademicUtilities(Node):
         self.prev_action = ""
         self.prev_pose_name = ""
 
-        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
-            "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
+        if self.namespace != "":
+            self.joint_names = [self.namespace + "/" + "meca_axis_1_joint", 
+                                self.namespace + "/" + "meca_axis_2_joint", 
+                                self.namespace + "/" + "meca_axis_3_joint",
+                                self.namespace + "/" + "meca_axis_4_joint", 
+                                self.namespace + "/" + "meca_axis_5_joint", 
+                                self.namespace + "/" + "meca_axis_6_joint"]
+        else:
+            self.joint_names = ["meca_axis_1_joint", 
+                                "meca_axis_2_joint", 
+                                "meca_axis_3_joint",
+                                "meca_axis_4_joint", 
+                                "meca_axis_5_joint", 
+                                "meca_axis_6_joint"]
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_poses.csv')

@@ -15,17 +15,27 @@ from ros2_mecademic_msgs.msg import MecademicEsdToSP
 from ros2_mecademic_msgs.msg import MecademicSPToEsd
 from ros2_mecademic_msgs.msg import MecademicEsdToSP
 from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import LaunchConfiguration
+
+# NAMESPACE = LaunchConfiguration('node_namespace', default='').perform()
 
 class Ros2MecademicSimulator(Node):
 
     def __init__(self):
         super().__init__("ros2_mecademic_simulator")
 
+        self.namespace = ""
+
+        if len(sys.argv) != 2:
+            self.namespace = sys.argv[1]
+        else:
+            pass
+
         self.act_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.pub_pos = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.sync_speed_scale = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
         self.max_speed_factor = 2 # do not exceed 2, for now... Reduce if necessary.
-        self.joint_reference_pose = None
+        self.joint_reference_pose = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.joint_tolerance = 0.01
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
@@ -79,8 +89,20 @@ class Ros2MecademicSimulator(Node):
 
         # esd to joints:
         self.joint_state = JointState()
-        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
-            "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
+        if self.namespace != "":
+            self.joint_names = [self.namespace + "/" + "meca_axis_1_joint", 
+                                self.namespace + "/" + "meca_axis_2_joint", 
+                                self.namespace + "/" + "meca_axis_3_joint",
+                                self.namespace + "/" + "meca_axis_4_joint", 
+                                self.namespace + "/" + "meca_axis_5_joint", 
+                                self.namespace + "/" + "meca_axis_6_joint"]
+        else:
+            self.joint_names = ["meca_axis_1_joint", 
+                                "meca_axis_2_joint", 
+                                "meca_axis_3_joint",
+                                "meca_axis_4_joint", 
+                                "meca_axis_5_joint", 
+                                "meca_axis_6_joint"]
 
         self.joint_state_timer_period = 0.01
 
@@ -199,7 +221,7 @@ class Ros2MecademicSimulator(Node):
                
             for i in range(0, 6):
                 if self.gui_to_esd_msg.gui_joint_control != None:
-                    print(self.sync_speed_scale)
+                    # print(self.sync_speed_scale)
                     if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001*self.max_speed_factor:
                         if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
                             self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.max_speed_factor*self.gui_to_esd_msg.gui_speed_control*self.sync_speed_scale[i], 4)
@@ -216,16 +238,29 @@ class Ros2MecademicSimulator(Node):
                 else:
                     pass
         else:
+
+            for i in range(0, 6):
+                self.sync_speed_scale[i] = abs(self.joint_reference_pose[i] - self.act_pos[i])
+                
+            self.sync_max = max(self.sync_speed_scale)
+            if self.sync_max != 0:
+                self.sync_max_factor = 1 / self.sync_max
+            else:
+                self.sync_max_factor = 1
+
+            for i in range(0, 6):
+                self.sync_speed_scale[i] = self.sync_speed_scale[i]*self.sync_max_factor
+
             if self.joint_reference_pose != None:
                 for i in range(0, 6):
-                    if self.joint_reference_pose[i] < self.act_pos[i] - 0.001:
+                    if self.joint_reference_pose[i] < self.act_pos[i] - 0.001*self.max_speed_factor:
                         if self.joint_reference_pose[i] < self.act_pos[i] - 0.01:
-                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.sp_to_esd_msg.reference_joint_speed, 4)
+                            self.pub_pos[i] = round(self.act_pos[i] - 0.0001*self.max_speed_factor*self.sp_to_esd_msg.reference_joint_speed*self.sync_speed_scale[i], 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] - 0.001*self.max_speed_factor
-                    elif self.joint_reference_pose[i] > self.act_pos[i] + 0.001:
+                    elif self.joint_reference_pose[i] > self.act_pos[i] + 0.001*self.max_speed_factor:
                         if self.joint_reference_pose[i] > self.act_pos[i] + 0.01:
-                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.sp_to_esd_msg.reference_joint_speed, 4)
+                            self.pub_pos[i] = round(self.act_pos[i] + 0.0001*self.max_speed_factor*self.sp_to_esd_msg.reference_joint_speed*self.sync_speed_scale[i], 4)
                         else:
                             self.pub_pos[i] = self.act_pos[i] + 0.001*self.max_speed_factor
                     else:

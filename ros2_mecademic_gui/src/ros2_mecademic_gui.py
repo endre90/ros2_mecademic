@@ -92,8 +92,27 @@ class Window(QWidget, CommVariables):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
 
-        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
-            "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
+        self.namespace = ""
+
+        if len(sys.argv) != 2:
+            self.namespace = sys.argv[1]
+        else:
+            pass
+
+        if self.namespace != "":
+            self.joint_names = [self.namespace + "/" + "meca_axis_1_joint", 
+                                self.namespace + "/" + "meca_axis_2_joint", 
+                                self.namespace + "/" + "meca_axis_3_joint",
+                                self.namespace + "/" + "meca_axis_4_joint", 
+                                self.namespace + "/" + "meca_axis_5_joint", 
+                                self.namespace + "/" + "meca_axis_6_joint"]
+        else:
+            self.joint_names = ["meca_axis_1_joint", 
+                                "meca_axis_2_joint", 
+                                "meca_axis_3_joint",
+                                "meca_axis_4_joint", 
+                                "meca_axis_5_joint", 
+                                "meca_axis_6_joint"]
 
         self.joints_input = os.path.join(get_package_share_directory('ros2_mecademic_utilities'),
             'poses', 'joint_poses.csv')
@@ -669,13 +688,23 @@ class Window(QWidget, CommVariables):
 
         self.setLayout(grid)
 
-        self.setWindowTitle("Meca 500 joint pose controller")
+        if self.namespace == '':
+            self.setWindowTitle("Meca 500 joint pose controller")
+        else:
+            self.setWindowTitle("Meca 500 joint pose controller - " + self.namespace)
         self.resize(550, 250)
 
 class Ros2MecademicGui(Node, CommVariables):
 
     def __init__(self):
         super().__init__("ros2_mecademic_gui")
+
+        self.namespace = ""
+
+        if len(sys.argv) != 2:
+            self.namespace = sys.argv[1]
+        else:
+            pass
 
         self.gui_to_esd_msg = MecademicGuiToEsd()
         self.gui_to_utils_msg = MecademicGuiToUtils()
@@ -692,8 +721,20 @@ class Ros2MecademicGui(Node, CommVariables):
         self.gui_to_esd_timer_period = 0.02
         self.gui_to_utils_timer_period = 0.2
 
-        self.joint_names = ["meca_axis_1_joint", "meca_axis_2_joint", "meca_axis_3_joint", 
-            "meca_axis_4_joint", "meca_axis_5_joint", "meca_axis_6_joint"]
+        if self.namespace != "":
+            self.joint_names = [self.namespace + "/" + "meca_axis_1_joint", 
+                                self.namespace + "/" + "meca_axis_2_joint", 
+                                self.namespace + "/" + "meca_axis_3_joint",
+                                self.namespace + "/" + "meca_axis_4_joint", 
+                                self.namespace + "/" + "meca_axis_5_joint", 
+                                self.namespace + "/" + "meca_axis_6_joint"]
+        else:
+            self.joint_names = ["meca_axis_1_joint", 
+                                "meca_axis_2_joint", 
+                                "meca_axis_3_joint",
+                                "meca_axis_4_joint", 
+                                "meca_axis_5_joint", 
+                                "meca_axis_6_joint"]
 
         self.utils_to_gui_subscriber = self.create_subscription(
             MecademicUtilsToGui, 
