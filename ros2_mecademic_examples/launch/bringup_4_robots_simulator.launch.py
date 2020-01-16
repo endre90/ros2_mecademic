@@ -7,7 +7,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.actions import DeclareLaunchArgument
 
 def generate_launch_description():
-     package_prefix = get_package_share_directory('ros2_mecademic_bringup')
+     package_prefix = get_package_share_directory('ros2_mecademic_examples')
 
      namespace_1 = "robot1"
      namespace_2 = "robot2"
@@ -54,8 +54,8 @@ def generate_launch_description():
      mecademic_gui_to_utils_4 = 'mecademic_gui_to_utils'
      mecademic_utils_to_gui_4 = 'mecademic_utils_to_gui'
 
-     rviz_config_file = os.path.join(get_package_share_directory('ros2_mecademic_bringup'),
-                        'launch', 'meca_500_r3_4_robots.rviz')
+     rviz_config_file = os.path.join(get_package_share_directory('ros2_mecademic_examples'),
+                        'config', 'meca_500_r3_4_robots.rviz')
 
      return LaunchDescription([
 
