@@ -181,6 +181,18 @@ class Ros2MecademicSimulator(Node):
         
         return actual_joint_pose
 
+    def read_and_generate_pose_list(self):
+        '''
+        Acquire the names of all saved poses from a file to a list.
+        '''
+
+        pose_list = []
+        with open(self.joints_input, 'r') as f_in:
+            csv_input = csv.reader(f_in, delimiter=':')
+            for row in csv_input:
+                pose_list.append(row[0])
+            return pose_list
+
     def joint_state_callback(self, data):
         self.act_pos[0] = data.position[0]
         self.act_pos[1] = data.position[1]
@@ -192,7 +204,10 @@ class Ros2MecademicSimulator(Node):
     def sp_to_esd_callback(self, data):
         self.sp_to_esd_msg.reference_pose = data.reference_pose
         self.sp_to_esd_msg.reference_joint_speed = data.reference_joint_speed
-        self.joint_reference_pose = self.get_pose_from_pose_name(self.sp_to_esd_msg.reference_pose)
+        if self.sp_to_esd_msg.reference_pose in self.read_and_generate_pose_list():
+            self.joint_reference_pose = self.get_pose_from_pose_name(self.sp_to_esd_msg.reference_pose)
+        else:
+            pass
 
     def gui_to_esd_callback(self, data):
         self.gui_to_esd_msg.gui_control_enabled = data.gui_control_enabled
@@ -206,21 +221,21 @@ class Ros2MecademicSimulator(Node):
 
     def joint_state_publisher_callback(self):        
         if self.gui_to_esd_msg.gui_control_enabled == True:
+            if self.gui_to_esd_msg.gui_joint_control != None:
             
-            for i in range(0, 6):
-                self.sync_speed_scale[i] = abs(self.gui_to_esd_msg.gui_joint_control[i] - self.act_pos[i])
-                
-            self.sync_max = max(self.sync_speed_scale)
-            if self.sync_max != 0:
-                self.sync_max_factor = 1 / self.sync_max
-            else:
-                self.sync_max_factor = 1
+                for i in range(0, 6):
+                    self.sync_speed_scale[i] = abs(self.gui_to_esd_msg.gui_joint_control[i] - self.act_pos[i])
 
-            for i in range(0, 6):
-                self.sync_speed_scale[i] = self.sync_speed_scale[i]*self.sync_max_factor
-               
-            for i in range(0, 6):
-                if self.gui_to_esd_msg.gui_joint_control != None:
+                self.sync_max = max(self.sync_speed_scale)
+                if self.sync_max != 0:
+                    self.sync_max_factor = 1 / self.sync_max
+                else:
+                    self.sync_max_factor = 1
+
+                for i in range(0, 6):
+                    self.sync_speed_scale[i] = self.sync_speed_scale[i]*self.sync_max_factor
+
+                for i in range(0, 6):
                     # print(self.sync_speed_scale)
                     if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.001*self.max_speed_factor:
                         if self.gui_to_esd_msg.gui_joint_control[i] < self.act_pos[i] - 0.01:
@@ -235,23 +250,24 @@ class Ros2MecademicSimulator(Node):
                     else:
                         self.pub_pos[i] = self.gui_to_esd_msg.gui_joint_control[i]
                         pass
-                else:
-                    pass
+            else:
+                pass
         else:
 
-            for i in range(0, 6):
-                self.sync_speed_scale[i] = abs(self.joint_reference_pose[i] - self.act_pos[i])
-                
-            self.sync_max = max(self.sync_speed_scale)
-            if self.sync_max != 0:
-                self.sync_max_factor = 1 / self.sync_max
-            else:
-                self.sync_max_factor = 1
-
-            for i in range(0, 6):
-                self.sync_speed_scale[i] = self.sync_speed_scale[i]*self.sync_max_factor
-
             if self.joint_reference_pose != None:
+                for i in range(0, 6):
+                    self.sync_speed_scale[i] = abs(self.joint_reference_pose[i] - self.act_pos[i])
+
+                self.sync_max = max(self.sync_speed_scale)
+                if self.sync_max != 0:
+                    self.sync_max_factor = 1 / self.sync_max
+                else:
+                    self.sync_max_factor = 1
+
+                for i in range(0, 6):
+                    self.sync_speed_scale[i] = self.sync_speed_scale[i]*self.sync_max_factor
+
+            
                 for i in range(0, 6):
                     if self.joint_reference_pose[i] < self.act_pos[i] - 0.001*self.max_speed_factor:
                         if self.joint_reference_pose[i] < self.act_pos[i] - 0.01:

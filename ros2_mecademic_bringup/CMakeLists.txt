@@ -4,7 +4,7 @@ project(ros2_mecademic_bringup)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch urdf config
+install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
